@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: obsidian-backend
+    ports:
+      - "7153:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - VAULT_ROOT=${VAULT_ROOT}
+      - JWT_SECRET=${JWTSECRET}
+      - credential__username=${USERNAME}
+      - credential__password=${PASSWORD}
+    volumes:
+      # Mount the Windows vault directory to /vault in the container
+      # For Windows: Use the Windows path format
+      # For Linux/Mac: Adjust the path accordingly
+      - type: bind
+        source: W:/personal/university/ObsidianVault_remote
+        target: /vault
+    networks:
+      - obsidian-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./web.frontend
+      dockerfile: Dockerfile
+    container_name: obsidian-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:7153/api
+    depends_on:
+      - backend
+    networks:
+      - obsidian-network
+    restart: unless-stopped
+
+networks:
+  obsidian-network:
+    driver: bridge
+
