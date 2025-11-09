@@ -168,7 +168,6 @@ app.MapGet("/api/preview", (string path) =>
 #endregion
 
 app.Run();
-
 record LoginRequest(string Username, string Password);
 record FileWrite(string Path, string Content);
 record FolderCreate(string Path);
