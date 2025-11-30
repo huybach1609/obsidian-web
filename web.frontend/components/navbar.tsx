@@ -17,14 +17,7 @@ import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import {
-  TwitterIcon,
-  GithubIcon,
-  DiscordIcon,
-  HeartFilledIcon,
-  SearchIcon,
-  Logo,
-} from "@/components/icons";
+import { GithubIcon, HeartIcon, SearchIcon, TwitterIcon } from "lucide-react";
 
 export const Navbar = () => {
   const searchInput = (
@@ -53,7 +46,7 @@ export const Navbar = () => {
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
-            <Logo />
+            {/* <Logo /> */}
             <p className="font-bold text-inherit">ACME</p>
           </NextLink>
         </NavbarBrand>
@@ -84,10 +77,10 @@ export const Navbar = () => {
             <TwitterIcon className="text-default-500" />
           </Link>
           <Link isExternal aria-label="Discord" href={siteConfig.links.discord}>
-            <DiscordIcon className="text-default-500" />
+            {/* < className="text-default-500" /> */}
           </Link>
           <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-            <GithubIcon className="text-default-500" />
+            {/* <GithubIcon className="text-default-500" /> */}
           </Link>
           <ThemeSwitch />
         </NavbarItem>
@@ -98,7 +91,7 @@ export const Navbar = () => {
             as={Link}
             className="text-sm font-normal text-default-600 bg-default-100"
             href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
+            startContent={<HeartIcon className="text-danger" />}
             variant="flat"
           >
             Sponsor

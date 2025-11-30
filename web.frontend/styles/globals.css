@@ -1,3 +1,125 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
 
-@config "../tailwind.config.js"
+/* Markdown Preview Theme Variables - Light Mode (default) */
+:root {
+  /* Font families are set via Next.js localFont in fonts.ts */
+  /* They create CSS variables: --font-sans and --font-mono */
+  
+  --markdown-bg: #ede0d4;
+  --markdown-text: #03071e;
+  --markdown-h1: #d32f2f;
+  --markdown-h2: #ff7043;
+  --markdown-border: #e0e0e0;
+  --markdown-code-bg: #ecd6c0;
+  --markdown-code-text: #333333;
+  --markdown-quote-border: #bdbdbd;
+  --markdown-quote-text: #666666;
+}
+
+/* Markdown Preview Theme Variables - Dark Mode */
+.dark {
+  --markdown-bg: #1e1e1e;
+  --markdown-text: #f8f8f2;
+  --markdown-h1: #ff6961;
+  --markdown-h2: #ffa07a;
+  --markdown-border: #444444;
+  --markdown-code-bg: #333333;
+  --markdown-code-text: #f8f8f2;
+  --markdown-quote-border: #555555;
+  --markdown-quote-text: #cccccc;
+}
+
+/* Preview area container constraints */
+#preview-area {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* Preview area code block wrapping - Default (wrap mode) */
+#preview-area pre {
+  white-space: pre-wrap !important;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+#preview-area code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+#preview-area pre code {
+  white-space: pre-wrap !important;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: block;
+}
+
+/* No-wrap mode - when textWrap is false */
+#preview-area.no-wrap {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  min-width: 0;
+}
+
+#preview-area.no-wrap pre {
+  white-space: pre !important;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  display: block;
+  margin: 0;
+  padding: 1em;
+}
+
+#preview-area.no-wrap code {
+  white-space: pre;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+#preview-area.no-wrap pre code {
+  white-space: pre !important;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  display: block;
+}
+
+/* Ensure all content respects container boundaries in no-wrap mode */
+#preview-area.no-wrap > * {
+  min-width: 0;
+}
+
+#preview-area.no-wrap table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure parent containers don't allow overflow to escape */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Default font settings for the entire app */
+body {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+code, pre {
+  font-family: var(--font-mono), 'Courier New', monospace;
+}

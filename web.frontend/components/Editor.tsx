@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@uiw/react-codemirror';
-import axios from '@/lib/axios';
+import { getFile, updateFile, getFilePreview } from '@/services/fileservice';
 import DOMPurify from 'dompurify';
+import Header from './Header';
 
 interface EditorProps {
   path: string | null;
@@ -32,7 +33,7 @@ export default function Editor({ path, isAuthenticated }: EditorProps) {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get('/file', { params: { path } });
+      const data = await getFile(path);
       setContent(data.content);
     } catch (err: any) {
       console.error('Error loading file:', err);
@@ -54,13 +55,13 @@ export default function Editor({ path, isAuthenticated }: EditorProps) {
     setSaving(true);
     setError(null);
     try {
-      await axios.put('/file', { path, content });
+      await updateFile(path, content);
       // update preview
       try {
-        const html = await axios.get('/preview', { params: { path } });
+        const previewHtml = await getFilePreview(path);
         const previewArea = document.getElementById('preview-area');
         if (previewArea) {
-          previewArea.innerHTML = DOMPurify.sanitize(html.data);
+          previewArea.innerHTML = DOMPurify.sanitize(previewHtml);
         }
       } catch (previewErr) {
         console.error('Error loading preview:', previewErr);
@@ -80,42 +81,43 @@ export default function Editor({ path, isAuthenticated }: EditorProps) {
   if (!isAuthenticated) {
     return (
       <div className="p-4">
-        <p className="text-gray-600">Please login to edit files</p>
+        <p className="text-foreground">Please login to edit files</p>
       </div>
     );
   }
 
   if (!path) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-600 text-lg">No file selected</p>
+      <div className="flex items-center justify-center h-full bg-background text-foreground">
+        <p className="text-lg">No file selected</p>
       </div>
     );
   }
 
   return (
+    
     <div className="h-full flex flex-col">
-      <div className="p-4 bg-gray-50 border-b border-gray-300 flex items-center gap-3 flex-wrap">
-        <span className="text-sm font-semibold text-gray-800 font-mono">{path}</span>
+      <Header className="flex justify-between items-center">
+        <span className="text-sm font-semibold text-foreground font-mono">{path}</span>
         <button
           onClick={save}
           disabled={saving}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white border-none rounded-md text-sm font-medium transition-colors cursor-pointer"
+          className="px-4 py-2 bg-primary hover:bg-primary-dark disabled:bg-gray-400 disabled:cursor-not-allowed text-white border-none rounded-md text-sm font-medium transition-colors cursor-pointer"
         >
           {saving ? 'Saving...' : 'Save'}
         </button>
         {error && (
-          <span className="text-red-600 text-sm bg-red-50 px-3 py-1 rounded border border-red-200">
+          <span className="text-danger text-sm bg-danger-light px-3 py-1 rounded border border-danger-dark">
             {error}
           </span>
         )}
-      </div>
+      </Header>
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-foreground">Loading...</p>
         </div>
       ) : (
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <CodeMirror
             value={content}
             onChange={(value) => setContent(value)}
@@ -123,7 +125,7 @@ export default function Editor({ path, isAuthenticated }: EditorProps) {
             theme={EditorView.theme({
               '&': {
                 color: '#1e293b', // slate-800 - dark text
-                backgroundColor: '#ffffff', // white background
+                backgroundColor: '#background', // white background
               },
               '.cm-content': {
                 caretColor: '#1e293b',

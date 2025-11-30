@@ -2,26 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from '@/lib/axios';
 import { setAuthToken } from '@/lib/axios';
+import { login } from '@/services/authservice';
 import { Button, Input } from '@heroui/react';
+import { useAppSettings, getTokenFromCookie } from '@/contexts/AppContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { accessToken, setAccessToken } = useAppSettings();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
 
   useEffect(() => {
-    // Redirect if already logged in
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('jwt');
-      if (token) {
-        router.push('/');
+    const token = accessToken ?? getTokenFromCookie();
+    if (token) {
+      if (!accessToken && token) {
+        setAccessToken(token);
       }
+      router.push('/');
     }
-  }, [router]);
+  }, [accessToken, router, setAccessToken]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,12 +31,10 @@ export default function LoginPage() {
     setLoggingIn(true);
 
     try {
-      const { data } = await axios.post('/login', {
-        username,
-        password,
-      });
+      const data = await login(username, password);
 
-      localStorage.setItem('jwt', data.token);
+
+      setAccessToken(data.token);
       setAuthToken(data.token);
       router.push('/');
 

@@ -3,8 +3,9 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Tree } from 'react-arborist';
 import type { NodeApi, TreeApi } from 'react-arborist';
-import axios from '@/lib/axios';
+import { getTree } from '@/services/fileservice';
 import { ChevronDownIcon, ChevronRightIcon, FileIcon, FolderIcon } from 'lucide-react';
+import { Spinner } from '@heroui/react';
 
 interface TreeItem {
   path: string;
@@ -106,7 +107,7 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
 
     try {
       console.log('fetching', `/tree?path=${folderPath}`);
-      const { data } = await axios.get('/tree', { params: { path: folderPath } });
+      const data = await getTree(folderPath);
 
       // Sort the data: folders first, then files, both by name
       const sortedData = sortTreeItems(data);
@@ -254,18 +255,16 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
   if (!isAuthenticated) {
     return (
       <div>
-        <h4 className="text-lg font-semibold text-gray-800 mb-3">Files</h4>
-        <p className="text-gray-600 text-sm">Please login to view files</p>
+        <h4 className="text-lg font-semibold text-foreground mb-3">Files</h4>
+        <p className="text-foreground text-sm">Please login to view files</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center gap-2 text-gray-700 justify-right">
-        <FolderIcon className="h-5 w-5 text-gray-600" />
-        <div ref={headerRef} className="text-lg font-semibold text-gray-800">Files</div>
-      </div>
+    <div className="h-full flex flex-col p-2 bg-background text-foreground">
+  
+      {/* abnormal loading state */}
       {loading && rootItems.length === 0 && (
         <p className="text-gray-600 text-sm">Loading...</p>
       )}
@@ -277,7 +276,7 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
       {!loading && !error && treeData.length === 0 && (
         <p className="text-gray-600 text-sm">No files found</p>
       )}
-
+      {/* normal loading state */}
       {treeData.length > 0 && (
           <div ref={containerRef} className="flex-1 min-h-0" style={{ height: '100%' }}>
             <Tree
@@ -306,7 +305,7 @@ function Node({ node, style, dragHandle, loadingFolders }: {
   dragHandle?: any;
   loadingFolders?: Set<string>;
 }) {
-  const Icon = node.isInternal ? <FolderIcon className="w-4 h-4 text-blue-600" /> : <FileIcon className="w-4 h-4 text-gray-600" />;
+  const Icon = node.isInternal ? <FolderIcon className="w-4 h-4 text-primary" /> : <FileIcon className="w-4 h-4 text-foreground" />;
   const isSelected = node.isSelected;
   const isFocused = node.isFocused;
   const isLoading = node.isInternal && loadingFolders?.has(node.data.path);
@@ -315,8 +314,8 @@ function Node({ node, style, dragHandle, loadingFolders }: {
     <div
       ref={dragHandle}
       style={style}
-      className={`flex items-center gap-2 px-2 py-1 cursor-pointer select-none ${isSelected ? 'bg-blue-100' : isFocused ? 'bg-blue-50' : 'hover:bg-gray-50'
-        } ${node.isInternal ? 'font-medium' : ''}`}
+      className={`flex items-center gap-2 px-2 py-1 cursor-pointer select-none rounded-lg hover:bg-primary/10 
+        ${isSelected ? 'bg-primary/80' : isFocused ? 'bg-primary' : 'hover:bg-primary'} ${node.isInternal ? 'font-medium' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         if (node.isInternal) {
@@ -332,21 +331,21 @@ function Node({ node, style, dragHandle, loadingFolders }: {
       }}
     >
       {/* Arrow indicator for folders */}
-      <span className="flex-shrink-0 w-4 text-center text-gray-500">
+      <span className="flex-shrink-0 w-4 text-center text-foreground">
         {node.isInternal && (
           isLoading ? (
-            <span className="animate-spin">⟳</span>
+            <Spinner size="sm" color="primary" className="h-4 w-4 mx-auto"  variant="simple" />
           ) : node.isOpen ? (
-            <ChevronDownIcon className="w-4 h-4 text-gray-500" />
+            <ChevronDownIcon className="w-4 h-4 text-foreground" />
           ) : (
-            <ChevronRightIcon className="w-4 h-4 text-gray-500" />
+            <ChevronRightIcon className="w-4 h-4 text-foreground" />
           )
         )}
       </span>
       {/* Icon */}
       <span className="flex-shrink-0">{Icon}</span>
       {/* Name */}
-      <span className="flex-1 truncate text-sm text-gray-700">{node.data.name}</span>
+      <span className="flex-1 truncate text-sm text-foreground">{node.data.name}</span>
     </div>
   );
 }

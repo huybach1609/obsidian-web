@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getTokenFromCookie } from '@/contexts/AppContext';
 
 // Get API URL from environment variable, fallback to '/api' for production
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
@@ -15,8 +16,8 @@ export function setAuthToken(token: string | null) {
 }
 
 // Set initial token if available
-if (typeof window !== 'undefined') {
-  const token = localStorage.getItem('jwt');
+if (typeof document !== 'undefined') {
+  const token = getTokenFromCookie();
   if (token) {
     setAuthToken(token);
   }

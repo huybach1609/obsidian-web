@@ -163,8 +163,26 @@ app.MapGet("/api/preview", (string path) =>
     var md = System.IO.File.ReadAllText(full);
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var html = Markdig.Markdown.ToHtml(md, pipeline);
-    return Results.Text(html, "text/html");
+    var wrapped = $"<div class=\"markdown-body\">{html}</div>";
+    return Results.Text(wrapped, "text/html");
 }).RequireAuthorization();
+
+// GET /api/files/search?q=query    - Search files
+// POST /api/files/create           - New file/folder
+// DELETE /api/files/{path}         - Delete file/folder
+// PUT /api/files/move              - Rename/move
+
+app.MapGet("/api/files/search", (string q) =>
+{
+    var full = SafePath(q);
+    if (!System.IO.File.Exists(full)) return Results.NotFound();
+    var md = System.IO.File.ReadAllText(full);
+    var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+    var html = Markdig.Markdown.ToHtml(md, pipeline);
+    var wrapped = $"<div class=\"markdown-body\">{html}</div>";
+    return Results.Text(wrapped, "text/html");
+}).RequireAuthorization();
+
 #endregion
 
 app.Run();

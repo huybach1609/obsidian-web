@@ -6,8 +6,9 @@ import { SwitchProps, useSwitch } from "@heroui/switch";
 import { useTheme } from "next-themes";
 import { useIsSSR } from "@react-aria/ssr";
 import clsx from "clsx";
+import { MoonIcon, SunIcon } from "lucide-react";
+import { useAppSettings } from "@/contexts/AppContext";
 
-import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
 
 export interface ThemeSwitchProps {
   className?: string;
@@ -18,11 +19,14 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
   className,
   classNames,
 }) => {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
+  const { setThemeMode } = useAppSettings();
   const isSSR = useIsSSR();
+  const activeTheme = (resolvedTheme ?? theme ?? "light") as "light" | "dark";
 
   const onChange = () => {
-    theme === "light" ? setTheme("dark") : setTheme("light");
+    const nextTheme = activeTheme === "light" ? "dark" : "light";
+    setThemeMode(nextTheme);
   };
 
   const {
@@ -33,8 +37,8 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
     getInputProps,
     getWrapperProps,
   } = useSwitch({
-    isSelected: theme === "light" || isSSR,
-    "aria-label": `Switch to ${theme === "light" || isSSR ? "dark" : "light"} mode`,
+    isSelected: activeTheme === "light" || isSSR,
+    "aria-label": `Switch to ${activeTheme === "light" || isSSR ? "dark" : "light"} mode`,
     onChange,
   });
 
@@ -71,9 +75,9 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
         })}
       >
         {!isSelected || isSSR ? (
-          <SunFilledIcon size={22} />
+          <SunIcon size={22} />
         ) : (
-          <MoonFilledIcon size={22} />
+          <MoonIcon size={22} />
         )}
       </div>
     </Component>
