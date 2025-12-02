@@ -16,6 +16,7 @@ namespace backend.Extentions
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
             services.AddCors();
+            services.AddMemoryCache();
             return services;
         }
         public static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration config, string jwtKey)

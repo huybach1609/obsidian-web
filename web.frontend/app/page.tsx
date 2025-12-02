@@ -7,7 +7,7 @@
 // }
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import TreeView from '@/components/TreeView';
 import Editor from '@/components/Editor';
 import Header from '@/components/Header';
@@ -20,16 +20,25 @@ import {
   UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { Avatar, Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, User } from '@heroui/react';
-import { LogOut, Code, Eye, WrapText, AlignLeft } from 'lucide-react';
+import { LogOut, Code, Eye, WrapText, AlignLeft, SunIcon, MoonIcon, EllipsisVertical } from 'lucide-react';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { getFilePreview } from '@/services/fileservice';
 import { motion } from 'framer-motion';
 import '../styles/markdown.css';
+import router from 'next/router';
+import { useTheme } from 'next-themes';
+import { useIsSSR } from '@react-aria/ssr';
+import { CommandMenu } from '@/components/CommandMenu';
+import { LeftSideBarTop } from '@/components/Bar/LeftSideBarTop';
 
 
 type MobileView = 'files' | 'editor' | 'preview';
 
 export default function Home() {
+  redirect('/notes');
+}
+function Home1() {
+  // redirect('/notes');
   const router = useRouter();
   const { isMobile, isWebView } = usePlatform();
   const { accessToken, setAccessToken } = useAppSettings();
@@ -75,6 +84,7 @@ export default function Home() {
   const handlePreview = async () => {
     console.log('handlePreview', selected);
     if (selected) {
+      console.log('selected', selected);
       const previewHtml = await getFilePreview(selected);
       const previewArea = document.getElementById('preview-area');
       if (previewArea) {
@@ -111,26 +121,8 @@ export default function Home() {
     return (
       <div className="flex flex-col bg-background text-foreground w-full h-screen">
         {/* Top Header - Always visible */}
-        <Header className="h-16">
-          <div className="flex items-center justify-between h-full">
-            <div className="flex items-center gap-2">
-              <UserCircleIcon className="h-5 w-5 text-foreground" />
-              <span className="text-sm font-medium text-foreground">Logged in</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeSwitch />
-              <Button
-                onPress={handleLogout}
-                color="danger"
-                variant="solid"
-                size="sm"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
-            </div>
-          </div>
-        </Header>
+        <LeftSideBarTop handleLogout={handleLogout} isMobile={isMobile} />
+    
 
         {/* Content Area - Switches based on selected tab */}
         <div className="flex-1 overflow-hidden">
@@ -292,22 +284,20 @@ export default function Home() {
   // Web Layout - Original three-panel layout
   return (
     <div className="flex bg-background text-foreground w-full h-screen">
+      <CommandMenu />
       {/* Left Sidebar - File Explorer */}
       <div className="border-r-2 border-gray-300 bg-background text-foreground flex flex-col min-w-64 ">
-        <LeftSidebarTop handleLogout={handleLogout} />
+        <LeftSideBarTop handleLogout={handleLogout} isMobile={false} />
         <div className="flex-1 overflow-y-auto">
           <TreeView
             path={treePath}
+            // onSelect={(path) => router.push(`/notes/${path}`)}
             onSelect={(p) => setSelected(p)}
             isAuthenticated={true}
           />
         </div>
       </div>
 
-      {/* Middle Panel - Editor */}
-      {/* <div className="bg-background text-foreground flex flex-col border-r-2 border-gray-300 min-h-0 grow-1">
-        <Editor path={selected} isAuthenticated={true} />
-      </div> */}
 
       {/* Right Panel - Preview */}
       <div className="bg-background text-foreground flex flex-col min-h-0 grow-1 min-w-0">
@@ -342,63 +332,3 @@ export default function Home() {
   );
 }
 
-const LeftSidebarTop = ({ handleLogout }: { handleLogout: () => void }) => {
-  return (
-    <Header>
-      <div className="flex items-center justify-between h-full">
-
-        {/* <div className="flex items-center gap-2 text-foreground">
-          <UserCircleIcon className="h-5 w-5" />
-          <span className="text-sm font-medium text-foreground">Logged in</span>
-        </div> */}
-
-        <div className="flex items-center gap-3">
-          {/* <ThemeSwitch />
-          <Button
-            onPress={handleLogout}
-            color="danger"
-            variant="solid"
-            size="sm"
-            isIconOnly
-          >
-            <LogOut className="h-4 w-4" />
-          </Button> */}
-
-          <div className="flex items-center gap-4">
-     
-            <Dropdown placement="bottom-start">
-              <DropdownTrigger>
-                <User
-                  as="button"
-                  avatarProps={{
-                    isBordered: true,
-                    src: "/blank.jpg",
-                  }}
-                  className="transition-transform"
-                  description="@tonyreichert"
-                  name="Tony Reichert"
-                />
-              </DropdownTrigger>
-              <DropdownMenu aria-label="User Actions" variant="flat">
-                <DropdownItem key="profile" className="h-14 gap-2">
-                  <p className="font-bold">Signed in as</p>
-                  <p className="font-bold">@tonyreichert</p>
-                </DropdownItem>
-                <DropdownItem key="settings">My Settings</DropdownItem>
-                <DropdownItem key="team_settings">Team Settings</DropdownItem>
-                <DropdownItem key="analytics">Analytics</DropdownItem>
-                <DropdownItem key="system">System</DropdownItem>
-                <DropdownItem key="configurations">Configurations</DropdownItem>
-                <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
-                <DropdownItem key="logout" color="danger">
-                  Log Out
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-
-        </div>
-      </div>
-    </Header>
-  );
-}

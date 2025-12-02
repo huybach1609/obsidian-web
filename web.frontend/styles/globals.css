@@ -58,6 +58,8 @@
 
 #preview-area pre code {
   white-space: pre-wrap !important;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
   word-wrap: break-word;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -82,6 +84,8 @@
 }
 
 #preview-area.no-wrap code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
   white-space: pre;
   word-wrap: normal;
   word-break: normal;
@@ -89,6 +93,8 @@
 }
 
 #preview-area.no-wrap pre code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
   white-space: pre !important;
   word-wrap: normal;
   word-break: normal;
@@ -122,4 +128,38 @@ body {
 
 code, pre {
   font-family: var(--font-mono), 'Courier New', monospace;
+}
+
+/* Custom Scrollbar - Transparent with thumb on hover */
+/* Webkit browsers (Chrome, Edge, Safari) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
 }

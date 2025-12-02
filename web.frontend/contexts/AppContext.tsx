@@ -9,12 +9,15 @@ import {
   useState,
 } from 'react';
 import { useTheme } from 'next-themes';
+import { FileIndexDto } from '@/types/FileIndexDto';
+import axios from 'axios';
 
 type ThemeMode = 'light' | 'dark';
 
 type AppContextValue = {
   theme: ThemeMode;
   accessToken: string | null;
+  fileIndex: FileIndexDto[];
   setThemeMode: (mode: ThemeMode) => void;
   setAccessToken: (token: string | null) => void;
   clearAppSettings: () => void;
@@ -27,6 +30,7 @@ const COOKIE_MAX_AGE_DAYS = 30;
 const defaultValue: AppContextValue = {
   theme: 'light',
   accessToken: null,
+  fileIndex: [],
   setThemeMode: () => {},
   setAccessToken: () => {},
   clearAppSettings: () => {},
@@ -65,6 +69,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme, setTheme } = useTheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [fileIndex, setFileIndexState] = useState<FileIndexDto[]>([]);
+
   const initializedRef = useRef(false);
   const syncFromProviderRef = useRef(false);
 
@@ -108,6 +114,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [resolvedTheme]);
 
+  // auto load file index from backend cache
+  useEffect(() => {
+    const fetchFileIndex = async () => {
+      const response = await axios.get('/file-index');
+      console.log('response', response.data);
+      setFileIndexState(response.data);
+    }
+    if (getTokenFromCookie()) {
+      fetchFileIndex();
+    }
+  }, [accessToken]);
+
   const updateThemeMode = useCallback(
     (mode: ThemeMode) => {
       syncFromProviderRef.current = true;
@@ -141,6 +159,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         theme: themeMode,
         accessToken,
+        fileIndex,
         setThemeMode: updateThemeMode,
         setAccessToken: updateAccessToken,
         clearAppSettings,

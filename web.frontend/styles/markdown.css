@@ -37,7 +37,7 @@
   #preview-area .markdown-body li {
     margin: 0.4em 0;
     color: var(--markdown-text);
-    line-height: 1.2;
+    line-height: 0.8;
     
   }
   
@@ -71,7 +71,7 @@
   /* Code */
   #preview-area .markdown-body code {
     font-family: var(--font-mono);
-    background: var(--markdown-code-bg);
+    background-color: color-mix(in srgb, var(--markdown-code-bg) 80%, transparent);
     padding: 10px 10px;
     border-radius: 4px;
     color: var(--markdown-code-text);
