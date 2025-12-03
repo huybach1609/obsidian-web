@@ -5,6 +5,7 @@ import { Button, ScrollShadow, Spinner } from "@heroui/react";
 import { AlignLeft, EyeIcon, WrapText } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { siteConfig } from "@/config/site";
 
 import '../../../styles/markdown.css';
 
@@ -32,6 +33,21 @@ export default function NotesPage() {
         }).finally(() => {
             setLoading(false);
         });
+    }, [filePath]);
+
+    // Update browser tab title based on fileName
+    useEffect(() => {
+        if (filePath) {
+            const fileName = filePath.split('/').pop() || filePath;
+            document.title = `${fileName} - ${siteConfig.name}`;
+        } else {
+            document.title = siteConfig.name;
+        }
+        
+        // Cleanup: reset title when component unmounts
+        return () => {
+            document.title = siteConfig.name;
+        };
     }, [filePath]);
 
 
