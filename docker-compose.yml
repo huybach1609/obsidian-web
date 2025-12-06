@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   backend:
@@ -11,17 +10,15 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:2112
-      - VAULT_ROOT=${VAULT_ROOT}
-      - JWT_SECRET=${JWTSECRET}
+        # Your custom config
+      - Vault__Root=/vault
+      - jwt_secret=${JWT_SECRET}
       - credential__username=${USERNAME}
       - credential__password=${PASSWORD}
+      
     volumes:
       # Mount the Windows vault directory to /vault in the container
-      # For Windows: Use the Windows path format
-      # For Linux/Mac: Adjust the path accordingly
-      - type: bind
-        source: W:/personal/university/ObsidianVault_remote
-        target: /vault
+      - "C:/Users/bachLH/Documents/ObsidianVault_remote:/vault"
     networks:
       - obsidian-network
     restart: unless-stopped
@@ -35,7 +32,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=/api
+      - NEXT_PUBLIC_API_URL=http://backend:2112/api
     depends_on:
       - backend
     networks:

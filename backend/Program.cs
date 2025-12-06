@@ -9,8 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-var VAULT_ROOT = builder.Configuration["Vault:Root"] ?? builder.Configuration["VAULT_ROOT"] ?? "/vault";
-Console.WriteLine($"Root path: {VAULT_ROOT}");
+var VAULT_ROOT = builder.Configuration["Vault:Root"] ?? builder.Configuration["VAULT_ROOT"] ??
+    throw new EmptyConfigurationValueException("Vault_root is not configured in environment variables.");
+;
 var jwtKey = builder.Configuration["JWT_SECRET"] ??
 throw new EmptyConfigurationValueException("JWT_SECRET is not configured in environment variables.");
 
@@ -20,6 +21,10 @@ throw new EmptyConfigurationValueException("credential__username is not configur
 var password = builder.Configuration["credential:password"] ??
 throw new EmptyConfigurationValueException("credential__password is not configured in environment variables.");
 
+Console.WriteLine($"Root path: {VAULT_ROOT}");
+Console.WriteLine($"JWT Key: {jwtKey}");
+Console.WriteLine($"Username: {username}");
+Console.WriteLine($"Password: {password}");
 
 builder.Services.AddAppCore(builder.Configuration);
 builder.Services.AddAuthentication(builder.Configuration, jwtKey);
