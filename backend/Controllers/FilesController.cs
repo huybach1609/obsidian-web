@@ -166,30 +166,61 @@ namespace backend.Controllers
             return Content(wrapped, "text/html");
         }
 
-        // Use IMemoryCache to save the list file, avoid scanning the disk every time calling the API
+        //// Use IMemoryCache to save the list file, avoid scanning the disk every time calling the API
+        //[HttpGet("file-index")]
+        //public IActionResult GetFileIndex()
+        //{
+        //    // Key cache
+        //    string cacheKey = "vault_file_index";
+
+        //    if (!_cache.TryGetValue(cacheKey, out List<FileIndexDto> fileList))
+        //    {
+        //        // If not in cache, scan directory
+        //        var rootPath = _vaultRoot;
+        //        var files = Directory.GetFiles(rootPath, "*.md", SearchOption.AllDirectories);
+
+        //        fileList = files.Select(f => new FileIndexDto
+        //        {
+        //            FileName = Path.GetFileNameWithoutExtension(f),
+        //            FilePath = Path.GetRelativePath(rootPath, f)
+        //        }).ToList();
+
+        //        _cache.Set(cacheKey, fileList, TimeSpan.FromMinutes(10));
+        //    }
+        //    Console.WriteLine(fileList);
+            
+
+        //    return Ok(fileList);
+        //}
         [HttpGet("file-index")]
-        public IActionResult GetFileIndex()
+        public async Task<IActionResult> GetFileIndex()
         {
-            // Key cache
             string cacheKey = "vault_file_index";
 
             if (!_cache.TryGetValue(cacheKey, out List<FileIndexDto> fileList))
             {
-                // If not in cache, scan directory
                 var rootPath = _vaultRoot;
-                var files = Directory.GetFiles(rootPath, "*.md", SearchOption.AllDirectories);
 
-                fileList = files.Select(f => new FileIndexDto
+                // Move heavy work off the request thread
+                fileList = await Task.Run(() =>
                 {
-                    FileName = Path.GetFileNameWithoutExtension(f),
-                    FilePath = Path.GetRelativePath(rootPath, f)
-                }).ToList();
+                    var files = Directory.GetFiles(rootPath, "*.md", SearchOption.AllDirectories);
+
+                    return files.Select(f => new FileIndexDto
+                    {
+                        FileName = Path.GetFileNameWithoutExtension(f),
+                        FilePath = Path.GetRelativePath(rootPath, f)
+                    }).ToList();
+                });
 
                 _cache.Set(cacheKey, fileList, TimeSpan.FromMinutes(10));
             }
 
+            Console.WriteLine(fileList);
+
             return Ok(fileList);
         }
+
 
 
     }
