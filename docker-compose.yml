@@ -7,10 +7,10 @@ services:
       dockerfile: Dockerfile
     container_name: obsidian-backend
     ports:
-      - "7153:8080"
+      - "7153:2112"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
+      - ASPNETCORE_URLS=http://+:2112
       - VAULT_ROOT=${VAULT_ROOT}
       - JWT_SECRET=${JWTSECRET}
       - credential__username=${USERNAME}
@@ -35,7 +35,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:7153/api
+      - NEXT_PUBLIC_API_URL=/api
     depends_on:
       - backend
     networks:
