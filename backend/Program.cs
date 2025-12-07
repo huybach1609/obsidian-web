@@ -28,6 +28,7 @@ Console.WriteLine($"Password: {password}");
 
 builder.Services.AddAppCore(builder.Configuration);
 builder.Services.AddAuthentication(builder.Configuration, jwtKey);
+builder.Services.AddHealthChecks();
 
 
 var app = builder.Build();
@@ -46,6 +47,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 #endregion
 
