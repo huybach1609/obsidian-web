@@ -4,6 +4,8 @@ const nextConfig = {
 
   ...(process.env.NODE_ENV === 'production' ? {
     async rewrites() {
+      console.log('process.env.NEXT_PUBLIC_API_HOST', process.env.NEXT_PUBLIC_API_HOST);
+
       let apiHost = process.env.NEXT_PUBLIC_API_HOST ;
       let apiPort = process.env.NEXT_PUBLIC_API_PORT ;
 

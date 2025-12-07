@@ -6,7 +6,11 @@ import { getTokenFromCookie } from '@/contexts/AppContext';
 // axios.defaults.baseURL = API_URL;
 
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_PROTOCOL}://${process.env.NEXT_PUBLIC_API_HOST}:${process.env.NEXT_PUBLIC_API_PORT}/api`;
+let API_URL = `${process.env.NEXT_PUBLIC_API_PROTOCOL}://${process.env.NEXT_PUBLIC_API_HOST}:${process.env.NEXT_PUBLIC_API_PORT}/api`;
+
+if(process.env.NODE_ENV === 'production') {
+    API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+}
 console.log('API_URL', API_URL);
 axios.defaults.baseURL = API_URL;
 
