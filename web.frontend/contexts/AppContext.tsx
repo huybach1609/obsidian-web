@@ -118,7 +118,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchFileIndex = async () => {
       const response = await axios.get('/file-index');
-      console.log('response', response.data);
+      // console.log('response', response.data);
       setFileIndexState(response.data);
     }
     if (getTokenFromCookie()) {

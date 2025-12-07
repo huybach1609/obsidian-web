@@ -2,7 +2,12 @@ import axios from 'axios';
 import { getTokenFromCookie } from '@/contexts/AppContext';
 
 // Get API URL from environment variable, fallback to '/api' for production
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// axios.defaults.baseURL = API_URL;
+
+
+const API_URL = `${process.env.NEXT_PUBLIC_API_PROTOCOL}://${process.env.NEXT_PUBLIC_API_HOST}:${process.env.NEXT_PUBLIC_API_PORT}/api`;
+console.log('API_URL', API_URL);
 axios.defaults.baseURL = API_URL;
 
 

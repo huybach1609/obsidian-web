@@ -31,7 +31,6 @@ export default function LoginPage() {
     setLoggingIn(true);
 
     try {
-      debugger;
       const data = await login(username, password);
 
 
