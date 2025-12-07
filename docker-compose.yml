@@ -1,28 +1,25 @@
 services:
-  backend:
+  obsidian-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: obsidian-backend
     ports:
-      - "7153:2112"
+      - "2112"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:2112
-        # Your custom config
-      - Vault__Root=/vault
       - jwt_secret=${JWT_SECRET}
       - credential__username=${USERNAME_APP}
       - credential__password=${PASSWORD_APP}
 
     volumes:
-      # Mount the Windows vault directory to /vault in the container
-      - "E:/university/Obsidian:/vault"
+      - "${VAULT_ROOT}:/vault"
     networks:
       - obsidian-network
     restart: unless-stopped
 
-  frontend:
+  obsidian-frontend:
     build:
       context: ./web.frontend
       dockerfile: Dockerfile
@@ -31,9 +28,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://backend:2112/api
     depends_on:
-      - backend
+      - obsidian-backend
     networks:
       - obsidian-network
     restart: unless-stopped
