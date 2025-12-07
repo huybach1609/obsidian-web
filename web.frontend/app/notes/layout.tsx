@@ -5,13 +5,21 @@ import { CommandMenu } from "@/components/CommandMenu";
 import TreeView from "@/components/TreeView";
 import { useAppSettings } from "@/contexts/AppContext";
 import { usePlatform } from "@/contexts/PlatformContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 export default function NotesLayout({ children }: { children: React.ReactNode }) {
 
     const router = useRouter();
+    const params = useParams();
     const { isMobile, isWebView } = usePlatform();
     const { setAccessToken } = useAppSettings();
+
+    // Extract the current path from route params (same logic as in page.tsx)
+    const selectedPath = decodeURIComponent(
+        Array.isArray(params.path)
+            ? params.path.join('/')
+            : params.path ?? ''
+    );
 
     const handleLogout = () => {
         setAccessToken(null);
@@ -40,6 +48,7 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
           <div className="flex-1 overflow-y-auto">
             <TreeView
               path="/"
+              selectedPath={selectedPath || undefined}
               onSelect={(path) => router.push(`/notes/${path}`)}
               isAuthenticated={true}
             />

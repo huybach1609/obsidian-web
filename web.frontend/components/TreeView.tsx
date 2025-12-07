@@ -23,11 +23,12 @@ interface TreeNode {
 
 interface TreeViewProps {
   path?: string;
+  selectedPath?: string; // Path to automatically open and select in the tree
   onSelect: (path: string) => void;
   isAuthenticated: boolean;
 }
 
-export default function TreeView({ path = '/', onSelect, isAuthenticated }: TreeViewProps) {
+export default function TreeView({ path = '/', selectedPath, onSelect, isAuthenticated }: TreeViewProps) {
   const [rootItems, setRootItems] = useState<TreeItem[]>([]);
   const [loadedChildren, setLoadedChildren] = useState<Map<string, TreeNode[]>>(new Map());
   const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
@@ -93,6 +94,16 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
       return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
     });
   }, []);
+  // Sort tree nodes: folders first, then files, both by name
+  const sortTreeNodes = useCallback((nodes: TreeNode[]): TreeNode[] => {
+    return [...nodes].sort((a, b) => {
+      // First sort by type: folders (isDir: true) come before files (isDir: false)
+      if (a.isDir && !b.isDir) return -1;
+      if (!a.isDir && b.isDir) return 1;
+      // If same type, sort by name (case-insensitive)
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
+  }, []);
 
   // Fetch folder contents from API
   const fetchTree = useCallback(async (folderPath: string, isRoot: boolean = false) => {
@@ -106,7 +117,6 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
     setError(null);
 
     try {
-      console.log('fetching', `/tree?path=${folderPath}`);
       const data = await getTree(folderPath);
 
       // Sort the data: folders first, then files, both by name
@@ -157,6 +167,7 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
   useEffect(() => {
     if (isAuthenticated) {
       fetchTree(path, true);
+
     } else {
       setRootItems([]);
       setError(null);
@@ -165,16 +176,100 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
     }
   }, [path, isAuthenticated, fetchTree]);
 
-  // Sort tree nodes: folders first, then files, both by name
-  const sortTreeNodes = useCallback((nodes: TreeNode[]): TreeNode[] => {
-    return [...nodes].sort((a, b) => {
-      // First sort by type: folders (isDir: true) come before files (isDir: false)
-      if (a.isDir && !b.isDir) return -1;
-      if (!a.isDir && b.isDir) return 1;
-      // If same type, sort by name (case-insensitive)
-      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-    });
-  }, []);
+  // Helper function to get all parent folder paths from a file path
+  const getParentPaths = useCallback((filePath: string): string[] => {
+    if (!filePath || filePath === '/') return [];
+
+    const parts = filePath.split('/').filter(p => p);
+    const parentPaths: string[] = [];
+
+    for (let i = 1; i <= parts.length; i++) {
+      const parentPath = '/' + parts.slice(0, i).join('/');
+      parentPaths.push(parentPath);
+    }
+    console.log('parentPaths', parentPaths);
+
+    return parentPaths;
+  }, [])
+  // Auto-open tree to selectedPath when it changes
+  useEffect(() => {
+    if (!selectedPath || !isAuthenticated || !treeRef.current || treeData.length === 0) {
+      return;
+    }
+
+    const openPathToNode = async () => {
+      const tree = treeRef.current;
+      if (!tree) return;
+
+      // Get all parent folder paths
+      const parentPaths = getParentPaths(selectedPath);
+      if (parentPaths.length === 0) return;
+
+      // Load and open all parent folders
+      for (const folderPath of parentPaths) {
+        // Skip if it's the target file itself (not a folder)
+        if (folderPath === selectedPath) continue;
+
+        // Check if folder needs to be loaded
+        const hasChildrenLoaded = loadedChildren.has(folderPath);
+        const isCurrentlyLoading = loadingFolders.has(folderPath);
+
+        if (!hasChildrenLoaded && !isCurrentlyLoading) {
+          // Load the folder
+          await fetchTree(folderPath, false);
+        }
+
+        // Wait a bit for the tree to update after loading
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Open the folder
+        const node = tree.get(folderPath.replace(/^\//, ''));
+
+        if (node && node.isInternal && !node.isOpen) {
+          node.open();
+          // Wait for the tree to update
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
+
+      // Select and focus the target node
+      const targetNode = tree.get(selectedPath);
+      if (targetNode) {
+        targetNode.select();
+        targetNode.focus();
+      }
+    };
+
+    // Use a small delay to ensure tree is fully rendered
+    const timeoutId = setTimeout(() => {
+      openPathToNode();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedPath, isAuthenticated, treeData, loadedChildren, loadingFolders, fetchTree]);
+
+  // Handle folder toggle - this is called AFTER react-arborist toggles the state
+  const handleToggle = useCallback((id: string) => {
+    const tree = treeRef.current;
+    if (!tree) return;
+
+    const node = tree.get(id);
+    if (!node || !node.isInternal) return;
+
+    const folderPath = node.data.path;
+    const isOpen = node.isOpen;
+
+    // If folder is now open and children aren't loaded, load them
+    if (isOpen) {
+      const hasChildrenLoaded = loadedChildren.has(folderPath);
+      const isCurrentlyLoading = loadingFolders.has(folderPath);
+
+      if (!hasChildrenLoaded && !isCurrentlyLoading) {
+        fetchTree(folderPath, false);
+      }
+    }
+  }, [loadedChildren, loadingFolders, fetchTree]);
+
 
   // Build tree data structure
   const treeData = useMemo(() => {
@@ -220,34 +315,10 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
     return populateChildren(rootNodes);
   }, [rootItems, loadedChildren, sortTreeNodes]);
 
-  // Handle folder toggle - this is called AFTER react-arborist toggles the state
-  const handleToggle = useCallback((id: string) => {
-    // console.log('handleToggle: folder', id);
-    const tree = treeRef.current;
-    if (!tree) return;
-
-    const node = tree.get(id);
-    if (!node || !node.isInternal) return;
-
-    const folderPath = node.data.path;
-    const isOpen = node.isOpen;
-
-    // If folder is now open and children aren't loaded, load them
-    if (isOpen) {
-      const hasChildrenLoaded = loadedChildren.has(folderPath);
-      const isCurrentlyLoading = loadingFolders.has(folderPath);
-
-      if (!hasChildrenLoaded && !isCurrentlyLoading) {
-        // console.log(`Loading children for: ${folderPath}`);
-        fetchTree(folderPath, false);
-      }
-    }
-  }, [loadedChildren, loadingFolders, fetchTree]);
 
   // Handle node click - for files
   const handleActivate = useCallback((node: NodeApi<TreeNode>) => {
     if (!node.isInternal) {
-      // console.log(`File selected: ${node.data.path}`);
       onSelect(node.data.path);
     }
   }, [onSelect]);
@@ -263,7 +334,7 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
 
   return (
     <div className="h-full flex flex-col p-2 bg-background text-foreground">
-  
+
       {/* abnormal loading state */}
       {loading && rootItems.length === 0 && (
         <p className="text-gray-600 text-sm">Loading...</p>
@@ -278,21 +349,21 @@ export default function TreeView({ path = '/', onSelect, isAuthenticated }: Tree
       )}
       {/* normal loading state */}
       {treeData.length > 0 && (
-          <div ref={containerRef} className="flex-1 min-h-0" style={{ height: '100%' }}>
-            <Tree
-              ref={treeRef}
-              data={treeData}
-              width="100%"
-              height={containerHeight}
-              indent={20}
-              onToggle={handleToggle}
-              onActivate={handleActivate}
-              rowHeight={28}
-              openByDefault={false}
-            >
-              {(props) => <Node {...props} loadingFolders={loadingFolders} />}
-            </Tree>
-          </div>
+        <div ref={containerRef} className="flex-1 min-h-0" style={{ height: '100%' }}>
+          <Tree
+            ref={treeRef}
+            data={treeData}
+            width="100%"
+            height={containerHeight}
+            indent={20}
+            onToggle={handleToggle}
+            onActivate={handleActivate}
+            rowHeight={28}
+            openByDefault={false}
+          >
+            {(props) => <Node {...props} loadingFolders={loadingFolders} />}
+          </Tree>
+        </div>
       )}
     </div>
   );
@@ -326,7 +397,6 @@ function Node({ node, style, dragHandle, loadingFolders }: {
           node.select();
           node.activate();
         }
-        // console.log('clicked', node.data.path);
 
       }}
     >
@@ -334,7 +404,7 @@ function Node({ node, style, dragHandle, loadingFolders }: {
       <span className="flex-shrink-0 w-4 text-center text-foreground">
         {node.isInternal && (
           isLoading ? (
-            <Spinner size="sm" color="primary" className="h-4 w-4 mx-auto"  variant="simple" />
+            <Spinner size="sm" color="primary" className="h-4 w-4 mx-auto" variant="simple" />
           ) : node.isOpen ? (
             <ChevronDownIcon className="w-4 h-4 text-foreground" />
           ) : (

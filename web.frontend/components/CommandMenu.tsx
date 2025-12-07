@@ -127,7 +127,7 @@ export const CommandMenu = () => {
                 backdrop: "bg-transparent"
             }}
         >
-            <ModalContent className="bg-background text-foreground p-0 m-0">
+            <ModalContent className="bg-background/80 text-foreground p-0 m-0">
                 <VisuallyHidden>
                     <h2>Command Palette</h2>
                 </VisuallyHidden>
@@ -139,24 +139,12 @@ export const CommandMenu = () => {
                         value={inputValue}
                         onValueChange={setInputValue}
                         onKeyDown={handleKeyDown}
-                        classNames={{
-                            base: "w-full bg-transparent border-transparent hover:bg-transparent",
-                            // inputWrapper: "bg-transparent border-transparent hover:bg-transparent focus-within:bg-transparent data-[focus=true]:bg-transparent shadow-none focus:shadow-none focus-visible:shadow-none",
-                            input: "focus:outline-none focus-visible:outline-none",
-                            inputWrapper: [
-                                "shadow-xl",
-                                "bg-default-200/50",
-                                "dark:bg-default/60",
-                                "backdrop-blur-xl",
-                                "backdrop-saturate-200",
-                              ]
-                        }}
                         startContent={
                             <SearchIcon className="mx-1" size={16} />
                         }
                         endContent={
                             <Kbd className="" keys={["escape"]}>
-                              Esc  
+                                Esc
                             </Kbd>
                         }
                         size="lg"
@@ -164,49 +152,49 @@ export const CommandMenu = () => {
                     />
                 </ModalHeader>
 
-                    {results.length === 0 && inputValue && (
-                        <div className="text-center py-8 text-neutral-500 text-sm">
-                            No results found.
-                        </div>
-                    )}
+                {results.length === 0 && inputValue && (
+                    <div className="text-center py-8 text-neutral-500 text-sm">
+                        No results found.
+                    </div>
+                )}
 
-                    {results.length > 0 && (
-                        <div className="mx-4 mt-2">
-                            <div className="text-xs font-semibold text-neutral-400 mb-2 px-2">
-                                FILES
-                            </div>
-                            <Listbox
-                                aria-label="File search results"
-                                selectedKeys={selectedKey ? [selectedKey] : []}
-                                onSelectionChange={handleSelectionChange}
-                                selectionMode="single"
-                                classNames={{
-                                    base: "max-h-[60vh] overflow-y-auto",
-                                    list: "gap-1"
-                                }}
-                            >
-                                {results.map((file: FileIndexDto) => (
-                                    <ListboxItem
-                                        key={file.filePath}
-                                        textValue={`${file.fileName} ${file.filePath}`}
-                                        classNames={{
-                                            base: [
-                                                "px-3 py-1 text-sm rounded-lg",
-                                                "data-[hover=true]:bg-primary/10",
-                                                "data-[selected=true]:bg-primary/10",
-                                                "cursor-pointer transition-colors"
-                                            ],
-                                            title: "text-foreground font-medium",
-                                            description: "text-foreground/80 text-xs"
-                                        }}
-                                        description={file.filePath}
-                                    >
-                                        {file.fileName}
-                                    </ListboxItem>
-                                ))}
-                            </Listbox>
+                {results.length > 0 && (
+                    <div className="mx-4 mt-2 bg-transparent">
+                        <div className="text-xs font-semibold text-neutral-400 mb-2 px-2">
+                            FILES
                         </div>
-                    )}
+                        <Listbox
+                            aria-label="File search results"
+                            selectedKeys={selectedKey ? [selectedKey] : []}
+                            onSelectionChange={handleSelectionChange}
+                            selectionMode="single"
+                            classNames={{
+                                base: "max-h-[60vh] overflow-y-auto",
+                                list: "gap-1 bg-transparent"
+                            }}
+                        >
+                            {results.map((file: FileIndexDto) => (
+                                <ListboxItem
+                                    key={file.filePath}
+                                    textValue={`${file.fileName} ${file.filePath}`}
+                                    classNames={{
+                                        base: [
+                                            "px-3 py-1 text-sm rounded-lg",
+                                            "data-[hover=true]:bg-primary/10",
+                                            "data-[selected=true]:bg-primary/10",
+                                            "cursor-pointer transition-colors"
+                                        ],
+                                        title: "text-foreground font-medium",
+                                        description: "text-foreground/80 text-xs"
+                                    }}
+                                    description={file.filePath}
+                                >
+                                    {file.fileName}
+                                </ListboxItem>
+                            ))}
+                        </Listbox>
+                    </div>
+                )}
             </ModalContent>
         </Modal>
     );

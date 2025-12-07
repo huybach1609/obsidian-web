@@ -22,7 +22,7 @@ export default function NotesPage() {
     const [textWrap, setTextWrap] = useState(true);
 
     useEffect(() => {
-        console.log('filePath', filePath);
+        // console.log('filePath', filePath);
         setLoading(true);
         getFilePreview(filePath ?? '').then(response => {
             setContent(response);
