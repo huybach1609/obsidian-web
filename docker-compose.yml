@@ -1,4 +1,3 @@
-
 services:
   backend:
     build:
@@ -13,12 +12,12 @@ services:
         # Your custom config
       - Vault__Root=/vault
       - jwt_secret=${JWT_SECRET}
-      - credential__username=${USERNAME}
-      - credential__password=${PASSWORD}
-      
+      - credential__username=${USERNAME_APP}
+      - credential__password=${PASSWORD_APP}
+
     volumes:
       # Mount the Windows vault directory to /vault in the container
-      - "C:/Users/bachLH/Documents/ObsidianVault_remote:/vault"
+      - "E:/university/Obsidian:/vault"
     networks:
       - obsidian-network
     restart: unless-stopped
@@ -42,4 +41,3 @@ services:
 networks:
   obsidian-network:
     driver: bridge
-
