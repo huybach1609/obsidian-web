@@ -191,62 +191,6 @@ export default function TreeView({ path = '/', selectedPath, onSelect, isAuthent
 
     return parentPaths;
   }, [])
-  // Auto-open tree to selectedPath when it changes
-  useEffect(() => {
-    if (!selectedPath || !isAuthenticated || !treeRef.current || treeData.length === 0) {
-      return;
-    }
-
-    const openPathToNode = async () => {
-      const tree = treeRef.current;
-      if (!tree) return;
-
-      // Get all parent folder paths
-      const parentPaths = getParentPaths(selectedPath);
-      if (parentPaths.length === 0) return;
-
-      // Load and open all parent folders
-      for (const folderPath of parentPaths) {
-        // Skip if it's the target file itself (not a folder)
-        if (folderPath === selectedPath) continue;
-
-        // Check if folder needs to be loaded
-        const hasChildrenLoaded = loadedChildren.has(folderPath);
-        const isCurrentlyLoading = loadingFolders.has(folderPath);
-
-        if (!hasChildrenLoaded && !isCurrentlyLoading) {
-          // Load the folder
-          await fetchTree(folderPath, false);
-        }
-
-        // Wait a bit for the tree to update after loading
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        // Open the folder
-        const node = tree.get(folderPath.replace(/^\//, ''));
-
-        if (node && node.isInternal && !node.isOpen) {
-          node.open();
-          // Wait for the tree to update
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-      }
-
-      // Select and focus the target node
-      const targetNode = tree.get(selectedPath);
-      if (targetNode) {
-        targetNode.select();
-        targetNode.focus();
-      }
-    };
-
-    // Use a small delay to ensure tree is fully rendered
-    const timeoutId = setTimeout(() => {
-      openPathToNode();
-    }, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedPath, isAuthenticated, treeData, loadedChildren, loadingFolders, fetchTree]);
 
   // Handle folder toggle - this is called AFTER react-arborist toggles the state
   const handleToggle = useCallback((id: string) => {
@@ -315,6 +259,62 @@ export default function TreeView({ path = '/', selectedPath, onSelect, isAuthent
     return populateChildren(rootNodes);
   }, [rootItems, loadedChildren, sortTreeNodes]);
 
+  // Auto-open tree to selectedPath when it changes
+  useEffect(() => {
+    if (!selectedPath || !isAuthenticated || !treeRef.current || treeData.length === 0) {
+      return;
+    }
+
+    const openPathToNode = async () => {
+      const tree = treeRef.current;
+      if (!tree) return;
+
+      // Get all parent folder paths
+      const parentPaths = getParentPaths(selectedPath);
+      if (parentPaths.length === 0) return;
+
+      // Load and open all parent folders
+      for (const folderPath of parentPaths) {
+        // Skip if it's the target file itself (not a folder)
+        if (folderPath === selectedPath) continue;
+
+        // Check if folder needs to be loaded
+        const hasChildrenLoaded = loadedChildren.has(folderPath);
+        const isCurrentlyLoading = loadingFolders.has(folderPath);
+
+        if (!hasChildrenLoaded && !isCurrentlyLoading) {
+          // Load the folder
+          await fetchTree(folderPath, false);
+        }
+
+        // Wait a bit for the tree to update after loading
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Open the folder
+        const node = tree.get(folderPath.replace(/^\//, ''));
+
+        if (node && node.isInternal && !node.isOpen) {
+          node.open();
+          // Wait for the tree to update
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
+
+      // Select and focus the target node
+      const targetNode = tree.get(selectedPath);
+      if (targetNode) {
+        targetNode.select();
+        targetNode.focus();
+      }
+    };
+
+    // Use a small delay to ensure tree is fully rendered
+    const timeoutId = setTimeout(() => {
+      openPathToNode();
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedPath, isAuthenticated, treeData, loadedChildren, loadingFolders, fetchTree]);
 
   // Handle node click - for files
   const handleActivate = useCallback((node: NodeApi<TreeNode>) => {
