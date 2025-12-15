@@ -10,12 +10,16 @@ export interface FileResponse {
   content: string;
 }
 
+export interface FileResponse {
+  content: string;
+  path: string;
+}
 export async function getTree(path: string) {
   const { data } = await axios.get<TreeItemDto[]>('/tree', { params: { path } });
   return data;
 }
 
-export async function getFile(path: string) {
+export async function getFile(path: string): Promise<FileResponse> {
   const { data } = await axios.get<FileResponse>('/file', { params: { path } });
   return data;
 }

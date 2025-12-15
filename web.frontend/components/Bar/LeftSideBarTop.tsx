@@ -8,13 +8,17 @@ import router from "next/router";
 
 export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () => void, isMobile: boolean }) => {
   const { theme, resolvedTheme } = useTheme();
-  const { setThemeMode } = useAppSettings();
+  const { setThemeMode, editMode, setEditMode } = useAppSettings();
   const isSSR = useIsSSR();
   const activeTheme = (resolvedTheme ?? theme ?? "light") as "light" | "dark";
 
   const onChange = () => {
     const nextTheme = activeTheme === "light" ? "dark" : "light";
     setThemeMode(nextTheme);
+  };
+
+  const onToggleEditMode = () => {
+    setEditMode(!editMode);
   };
 
   if (isMobile) {
@@ -36,6 +40,14 @@ export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () =>
             </DropdownTrigger>
             <DropdownMenu aria-label="User Actions" variant="flat">
               <DropdownItem key="settings" onPress={() => router.push('/settings')}>My Settings</DropdownItem>
+              <DropdownItem key="edit_mode" onPress={onToggleEditMode}>
+                <div className="flex items-center justify-between gap-2">
+                  <div>Edit mode</div>
+                  <div className="text-xs text-foreground-500">
+                    {editMode ? "On" : "Off"}
+                  </div>
+                </div>
+              </DropdownItem>
             </DropdownMenu>
           </Dropdown>
         </div>
@@ -92,6 +104,14 @@ export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () =>
               <p className="font-bold">@admin</p>
             </DropdownItem>
             <DropdownItem key="settings" onPress={() => router.push('/settings')}>My Settings</DropdownItem>
+            <DropdownItem key="edit_mode" onPress={onToggleEditMode}>
+              <div className="flex items-center justify-between gap-2">
+                <div>Edit mode</div>
+                <div className="text-xs text-foreground-500">
+                  {editMode ? "On" : "Off"}
+                </div>
+              </div>
+            </DropdownItem>
             <DropdownItem key="theme_switch" onPress={onChange} >
               <div className="flex items-center justify-between gap-2">
                 <div>Theme switch</div>

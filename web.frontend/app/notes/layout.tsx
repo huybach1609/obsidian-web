@@ -12,7 +12,7 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const params = useParams();
     const { isMobile, isWebView } = usePlatform();
-    const { setAccessToken } = useAppSettings();
+    const { setAccessToken, editMode } = useAppSettings();
 
     // Extract the current path from route params (same logic as in page.tsx)
     const selectedPath = decodeURIComponent(
@@ -49,7 +49,13 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
             <TreeView
               path="/"
               selectedPath={selectedPath || undefined}
-              onSelect={(path) => router.push(`/notes/${path}`)}
+              onSelect={(path) => {
+                if(editMode){
+                  router.push(`/notes/edit/${path}`)
+                } else {
+                  router.push(`/notes/${path}`)
+                }
+            }}
               isAuthenticated={true}
             />
           </div>

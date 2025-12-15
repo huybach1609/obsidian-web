@@ -1,4 +1,5 @@
 import "@/styles/globals.css";
+import "@mdxeditor/editor/style.css";
 import { Metadata, Viewport } from "next";
 import { Link } from "@heroui/link";
 import clsx from "clsx";

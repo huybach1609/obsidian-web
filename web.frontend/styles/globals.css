@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+@import "./markdown-variables.css";
+
 /* Markdown Preview Theme Variables - Light Mode (default) */
 :root {
   /* Font families are set via Next.js localFont in fonts.ts */

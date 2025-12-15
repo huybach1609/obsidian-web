@@ -12,7 +12,6 @@ namespace backend.Extentions
         public static IServiceCollection AddAppCore(this IServiceCollection services, IConfiguration config)
         {
             services.AddControllers();
-
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
             services.AddCors();

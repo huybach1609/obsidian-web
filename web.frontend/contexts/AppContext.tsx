@@ -11,54 +11,41 @@ import {
 import { useTheme } from 'next-themes';
 import { FileIndexDto } from '@/types/FileIndexDto';
 import axios from 'axios';
+import { deleteCookie, getCookie, setCookie } from '@/utils/cookie';
 
 type ThemeMode = 'light' | 'dark';
 
 type AppContextValue = {
   theme: ThemeMode;
   accessToken: string | null;
+  editMode: boolean;
   fileIndex: FileIndexDto[];
   setThemeMode: (mode: ThemeMode) => void;
   setAccessToken: (token: string | null) => void;
+  setEditMode: (mode: boolean) => void;
   clearAppSettings: () => void;
 };
 
 const THEME_COOKIE_KEY = 'app-theme';
+const EDIT_MODE_COOKIE_KEY = 'app-edit-mode';
 export const TOKEN_COOKIE_KEY = 'app-token';
 const COOKIE_MAX_AGE_DAYS = 30;
 
 const defaultValue: AppContextValue = {
   theme: 'light',
   accessToken: null,
+  editMode: false,
   fileIndex: [],
   setThemeMode: () => {},
   setAccessToken: () => {},
   clearAppSettings: () => {},
+  setEditMode: () => {},
 };
 
 const AppContext = createContext<AppContextValue>(defaultValue);
 
 function isThemeMode(value: string): value is ThemeMode {
   return value === 'light' || value === 'dark';
-}
-
-function setCookie(name: string, value: string, days = COOKIE_MAX_AGE_DAYS) {
-  if (typeof document === 'undefined') return;
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-}
-
-function deleteCookie(name: string) {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
-}
-
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const value = document.cookie
-    .split('; ')
-    .find(row => row.startsWith(`${name}=`));
-  return value ? decodeURIComponent(value.split('=')[1]) : null;
 }
 
 export function getTokenFromCookie() {
@@ -70,6 +57,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [fileIndex, setFileIndexState] = useState<FileIndexDto[]>([]);
+  const [editMode, setEditModeState] = useState<boolean>(false);
 
   const initializedRef = useRef(false);
   const syncFromProviderRef = useRef(false);
@@ -85,13 +73,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       setThemeModeState(cookieTheme);
       setTheme(cookieTheme);
     } else if (resolvedTheme && isThemeMode(resolvedTheme)) {
-      setCookie(THEME_COOKIE_KEY, resolvedTheme);
+      setCookie(THEME_COOKIE_KEY, resolvedTheme, COOKIE_MAX_AGE_DAYS);
       setThemeModeState(resolvedTheme);
     }
 
     const cookieToken = getCookie(TOKEN_COOKIE_KEY);
     if (cookieToken) {
       setAccessTokenState(cookieToken);
+    }
+
+    const cookieEditMode = getCookie(EDIT_MODE_COOKIE_KEY);
+    if (cookieEditMode != null) {
+      setEditModeState(cookieEditMode === 'true');
     }
   }, [resolvedTheme, setTheme]);
 
@@ -109,7 +102,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       if (prev === resolvedTheme) {
         return prev;
       }
-      setCookie(THEME_COOKIE_KEY, resolvedTheme);
+      setCookie(THEME_COOKIE_KEY, resolvedTheme, COOKIE_MAX_AGE_DAYS);
       return resolvedTheme;
     });
   }, [resolvedTheme]);
@@ -130,7 +123,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     (mode: ThemeMode) => {
       syncFromProviderRef.current = true;
       setThemeModeState(mode);
-      setCookie(THEME_COOKIE_KEY, mode);
+      setCookie(THEME_COOKIE_KEY, mode, COOKIE_MAX_AGE_DAYS);
       setTheme(mode);
     },
     [setTheme],
@@ -139,7 +132,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const updateAccessToken = useCallback((token: string | null) => {
     setAccessTokenState(token);
     if (token) {
-      setCookie(TOKEN_COOKIE_KEY, token);
+      setCookie(TOKEN_COOKIE_KEY, token, COOKIE_MAX_AGE_DAYS);
     } else {
       deleteCookie(TOKEN_COOKIE_KEY);
     }
@@ -151,18 +144,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     deleteCookie(THEME_COOKIE_KEY);
     deleteCookie(TOKEN_COOKIE_KEY);
     setAccessTokenState(null);
+    deleteCookie(EDIT_MODE_COOKIE_KEY);
+    setEditModeState(false);
     setTheme('light');
   }, [setTheme]);
+
+  const updateEditMode = useCallback((mode: boolean) => {
+    setEditModeState(mode);
+    setCookie(EDIT_MODE_COOKIE_KEY, String(mode), COOKIE_MAX_AGE_DAYS);
+  }, []);
 
   return (
     <AppContext.Provider
       value={{
         theme: themeMode,
         accessToken,
+        editMode,
         fileIndex,
         setThemeMode: updateThemeMode,
         setAccessToken: updateAccessToken,
         clearAppSettings,
+        setEditMode: updateEditMode,
       }}
     >
       {children}

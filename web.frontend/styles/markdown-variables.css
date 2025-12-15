@@ -1,0 +1,130 @@
+/* styles/markdown-variables.css or app/globals.css */
+
+:root {
+  /* Light theme variables – synced from styles/globals.css */
+  --markdown-bg: #ede0d4;
+  --markdown-text: #03071e;
+  --markdown-h1: #d32f2f;
+  --markdown-h2: #ff7043;
+  --markdown-code-bg: #ecd6c0;
+  --markdown-code-text: #333333;
+  --markdown-quote-border: #bdbdbd;
+  --markdown-quote-text: #666666;
+  --markdown-border: #e0e0e0;
+}
+
+[data-theme="dark"] {
+  /* Dark theme variables – synced from styles/globals.css (.dark) */
+  --markdown-bg: #1e1e1e;
+  --markdown-text: #f8f8f2;
+  --markdown-h1: #ff6961;
+  --markdown-h2: #ffa07a;
+  --markdown-code-bg: #333333;
+  --markdown-code-text: #f8f8f2;
+  --markdown-quote-border: #555555;
+  --markdown-quote-text: #cccccc;
+  --markdown-border: #444444;
+}
+
+/* Alternative: using class-based theme */
+.dark {
+  /* Same dark theme as above to stay in sync with globals.css */
+  --markdown-bg: #1e1e1e;
+  --markdown-text: #f8f8f2;
+  --markdown-h1: #ff6961;
+  --markdown-h2: #ffa07a;
+  --markdown-code-bg: #333333;
+  --markdown-code-text: #f8f8f2;
+  --markdown-quote-border: #555555;
+  --markdown-quote-text: #cccccc;
+  --markdown-border: #444444;
+}
+
+/* Keep your existing preview styles */
+#preview-area .markdown-body {
+  font-family: var(--font-sans);
+  color: var(--markdown-text);
+  background: var(--markdown-bg);
+  padding: 20px;
+  line-height: 1.4;
+}
+
+#preview-area .markdown-body h1 {
+  font-size: 1.8rem;
+  margin-top: 0rem;
+  color: var(--markdown-h1);
+}
+
+#preview-area .markdown-body h2 {
+  margin-top: 0rem;
+  color: var(--markdown-h2);
+}
+
+#preview-area .markdown-body ul,
+#preview-area .markdown-body ol {
+  margin: 0em 0;
+  padding-left: 1em;
+  line-height: 1;
+}
+
+#preview-area .markdown-body ul {
+  list-style-type: disc;
+}
+
+#preview-area .markdown-body ol {
+  list-style-type: decimal;
+}
+
+#preview-area .markdown-body li {
+  margin: 0.4em 0;
+  color: var(--markdown-text);
+  line-height: 0.8;
+}
+
+#preview-area .markdown-body ul ul,
+#preview-area .markdown-body ol ol,
+#preview-area .markdown-body ul ol,
+#preview-area .markdown-body ol ul {
+  margin: 0.5em 0;
+}
+
+#preview-area .markdown-body ul ul {
+  list-style-type: circle;
+}
+
+#preview-area .markdown-body ul ul ul {
+  list-style-type: square;
+}
+
+#preview-area .markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#preview-area .markdown-body th,
+#preview-area .markdown-body td {
+  border: 1px solid var(--markdown-border);
+  padding: 8px;
+}
+
+#preview-area .markdown-body code {
+  font-family: var(--font-mono);
+  background-color: color-mix(in srgb, var(--markdown-code-bg) 80%, transparent);
+  padding: 10px 10px;
+  border-radius: 4px;
+  color: var(--markdown-code-text);
+}
+
+#preview-area .markdown-body pre {
+  font-family: var(--font-mono);
+}
+
+#preview-area .markdown-body pre code {
+  font-family: var(--font-mono);
+}
+
+#preview-area .markdown-body blockquote {
+  border-left: 4px solid var(--markdown-quote-border);
+  padding-left: 12px;
+  color: var(--markdown-quote-text);
+}

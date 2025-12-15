@@ -1,0 +1,24 @@
+meta {
+  name: /api/file
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/api/file?path=Note to last day.md
+  body: none
+  auth: bearer
+}
+
+params:query {
+  path: Note to last day.md
+}
+
+auth:bearer {
+  token: {{jwt}}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

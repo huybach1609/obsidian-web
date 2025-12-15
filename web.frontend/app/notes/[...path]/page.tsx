@@ -2,20 +2,19 @@
 import Header from "@/components/Header";
 import { getFilePreview } from "@/services/fileservice";
 import { Button, ScrollShadow, Spinner } from "@heroui/react";
-import { AlignLeft, EyeIcon, WrapText } from "lucide-react";
-import { useParams } from "next/navigation";
+import { AlignLeft, EyeIcon, PencilIcon, WrapText } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { siteConfig } from "@/config/site";
+import { decodePathParam } from "@/utils/stringhelper";
 
 import '../../../styles/markdown.css';
 
 export default function NotesPage() {
+
     const params = useParams();
-    const filePath = decodeURIComponent(
-        Array.isArray(params.path)
-            ? params.path.join('/')
-            : params.path ?? ''
-    );
+    const router = useRouter();
+    const filePath = decodePathParam(params.path as string | string[] | undefined);
 
     const [loading, setLoading] = useState(false);
     const [content, setContent] = useState('');
@@ -43,16 +42,12 @@ export default function NotesPage() {
         } else {
             document.title = siteConfig.name;
         }
-        
+
         // Cleanup: reset title when component unmounts
         return () => {
             document.title = siteConfig.name;
         };
     }, [filePath]);
-
-
-
-
 
     return (
         <div className="flex flex-col h-full bg-background text-foreground">
@@ -65,19 +60,32 @@ export default function NotesPage() {
                             {filePath}
                         </span>
                     </div>
-                    <Button
-                        isIconOnly
-                        variant="light"
-                        size="sm"
-                        onPress={() => setTextWrap(!textWrap)}
-                        aria-label={textWrap ? "Disable text wrap" : "Enable text wrap"}
-                    >
-                        {textWrap ? (
-                            <WrapText className="h-5 w-5" />
-                        ) : (
-                            <AlignLeft className="h-5 w-5" />
-                        )}
-                    </Button>
+                    <div>
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            onPress={() => router.push(`/notes/edit/${filePath}`)}
+                            aria-label="Edit"
+                        >
+                            <PencilIcon className="h-5 w-5" />
+                        </Button>
+
+                        {/* wrap text button */}
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            onPress={() => setTextWrap(!textWrap)}
+                            aria-label={textWrap ? "Disable text wrap" : "Enable text wrap"}
+                        >
+                            {textWrap ? (
+                                <WrapText className="h-5 w-5" />
+                            ) : (
+                                <AlignLeft className="h-5 w-5" />
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </Header>
 

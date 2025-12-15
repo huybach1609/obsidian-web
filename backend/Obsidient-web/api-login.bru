@@ -1,0 +1,23 @@
+meta {
+  name: /api/login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/api/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "username": "admin",
+    "password": "3141592654"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

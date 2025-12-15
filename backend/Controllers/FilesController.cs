@@ -37,6 +37,11 @@ namespace backend.Controllers
         }
 
         // GET /api/tree
+        /// <summary>
+        ///  get list info of file/folder by path 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         [HttpGet("tree")]
         public IActionResult GetTree([FromQuery] string? path)
         {
@@ -57,6 +62,11 @@ namespace backend.Controllers
         }
 
         // GET /api/folder
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         [HttpGet("folder")]
         public IActionResult GetFolder([FromQuery] string? path)
         {
@@ -86,6 +96,11 @@ namespace backend.Controllers
         }
 
         // GET /api/file
+        /// <summary>
+        /// get detail md text file in side 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         [HttpGet("file")]
         public async Task<IActionResult> GetFile([FromQuery] string path)
         {
