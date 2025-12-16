@@ -113,13 +113,13 @@ export default function CodeMirrorEditor({
         // 1. DEFINE THE UI THEME (Container, Gutters, Cursor, Selection)
         const obsidianUITheme = EditorView.theme({
             "&": {
-                height: "100%",
+                height: "auto",
                 backgroundColor: "var(--markdown-bg)",
                 color: "var(--markdown-text)",
                 fontSize: "15px",
             },
             ".cm-scroller": {
-                overflow: "auto",
+                overflow: "visible",
                 fontFamily: '"Inter", -apple-system, sans-serif',
             },
             ".cm-content": {
@@ -324,5 +324,5 @@ export default function CodeMirrorEditor({
         }
     }, [initialContent]);
 
-    return <div ref={editorRef} style={{ height: '100%', overflow: 'hidden' }} />;
+    return <div ref={editorRef} style={{ position: 'relative' }} />;
 }

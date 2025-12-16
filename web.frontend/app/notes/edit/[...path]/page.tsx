@@ -5,12 +5,13 @@ import { decodePathParam } from "@/utils/stringhelper";
 import { useEffect, useState } from "react";
 import { siteConfig } from "@/config/site";
 import Header from "@/components/Header";
-import { EyeIcon, SaveIcon, PencilOffIcon, KeyboardIcon } from "lucide-react";
+import { EyeIcon, SaveIcon, PencilOffIcon, KeyboardIcon, PencilIcon } from "lucide-react";
 import { addToast, Button, cn } from "@heroui/react";
 import dynamic from "next/dynamic";
 import { FileResponse, getFile, updateFile } from "@/services/fileservice";
 import { useTheme } from "next-themes";
 import { useAppSettings } from "@/contexts/AppContext";
+import { twMerge } from "tailwind-merge";
 
 // Dynamic import to avoid SSR issues
 const CodeMirrorEditor = dynamic(() => import('@/components/CodeMirrorEditor'), {
@@ -74,12 +75,11 @@ export default function EditPage() {
                 description: 'The file has been saved successfully',
                 color: 'success',
                 hideIcon: false,
-                timeout: 10000,
+                timeout: 2000,
                 classNames: {
-                    base:cn([
+                    base: cn([
                         "bg-background/50 text-foreground",
                         "backdrop-blur-sm",
-                        "border-none",
                     ]),
                     closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
                 },
@@ -107,18 +107,25 @@ export default function EditPage() {
     }, [hasChanges]);
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground">
-            <Header>
+        <div className="h-screen  overflow-hidden relative">
+            <Header className=" top-0 z-10 absolute w-full bg-background/50 backdrop-blur-sm">
                 <div className="flex items-center justify-between h-full w-full">
-                    <div className="flex items-center gap-2">
-                        <EyeIcon className="h-5 w-5" />
-                        <h3 className="text-lg font-semibold">Edit</h3>
-                        <span className="text-sm text-gray-500 truncate max-w-md">
-                            {filePath}
-                        </span>
-                        {hasChanges && (
+                    <div className="">
+                        <div className="flex items-center gap-2">
+                            <PencilIcon className="h-5 w-5" />
+                            <h3 className="text-lg font-semibold">Edit</h3>
+
+                            <span className={twMerge(
+                                "text-sm text-gray-500 truncate max-w-md",
+                                hasChanges && "text-orange-500 italic"
+                            )}>
+                                {filePath} {hasChanges && '*'}
+                            </span>
+                        </div>
+                        {/* {hasChanges && (
                             <span className="text-xs text-orange-500">• Unsaved changes</span>
                         )}
+ */}
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -155,7 +162,9 @@ export default function EditPage() {
                 </div>
             </Header>
 
-            <div className="flex-1 overflow-hidden">
+
+            <div className="flex-1 h-screen overflow-y-auto">
+                <div className="h-24 bg-transparent "></div>
                 {markdown !== null ? (
                     <CodeMirrorEditor
                         key={filePath}
