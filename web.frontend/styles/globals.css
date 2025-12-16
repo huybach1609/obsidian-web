@@ -17,6 +17,12 @@
   --markdown-code-text: #333333;
   --markdown-quote-border: #bdbdbd;
   --markdown-quote-text: #666666;
+  --token-keyword: #d73a49;
+  --token-string: #032f62;
+  --token-number: #005cc5;
+  --token-comment: #6a737d;
+  --token-def: #6f42c1;
+  --token-variable: #24292e;
 }
 
 /* Markdown Preview Theme Variables - Dark Mode */
@@ -30,6 +36,12 @@
   --markdown-code-text: #f8f8f2;
   --markdown-quote-border: #555555;
   --markdown-quote-text: #cccccc;
+  --token-keyword: #c678dd;   /* Purple */
+  --token-string: #98c379;    /* Green */
+  --token-number: #d19a66;    /* Orange */
+  --token-comment: #5c6370;   /* Grey */
+  --token-def: #e06c75;       /* Red */
+  --token-variable: #abb2bf;  /* White/Grey */
 }
 
 /* Preview area container constraints */

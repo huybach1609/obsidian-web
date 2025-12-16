@@ -24,6 +24,15 @@
   --markdown-quote-border: #555555;
   --markdown-quote-text: #cccccc;
   --markdown-border: #444444;
+
+  --token-keyword: #d73a49;
+  --token-string: #032f62;
+  --token-number: #005cc5;
+  --token-comment: #6a737d;
+  --token-def: #6f42c1;
+  --token-variable: #24292e;
+  --token-property: #c678dd; /* Purple for JSON keys */
+  --token-class: #98c379;    /* Green for Classes */
 }
 
 /* Alternative: using class-based theme */
@@ -38,6 +47,15 @@
   --markdown-quote-border: #555555;
   --markdown-quote-text: #cccccc;
   --markdown-border: #444444;
+
+  --token-keyword: #c678dd;   /* Purple */
+  --token-string: #98c379;    /* Green */
+  --token-number: #d19a66;    /* Orange */
+  --token-comment: #5c6370;   /* Grey */
+  --token-def: #e06c75;       /* Red */
+  --token-variable: #abb2bf;  /* White/Grey */
+  --token-property: #e06c75; /* Red/Pink for JSON keys */
+  --token-class: #e5c07b;    /* Gold/Yellow for Classes */
 }
 
 /* Keep your existing preview styles */

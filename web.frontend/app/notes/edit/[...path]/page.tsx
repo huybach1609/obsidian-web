@@ -5,14 +5,15 @@ import { decodePathParam } from "@/utils/stringhelper";
 import { useEffect, useState } from "react";
 import { siteConfig } from "@/config/site";
 import Header from "@/components/Header";
-import { EyeIcon, SaveIcon, PencilOffIcon } from "lucide-react";
-import { Button } from "@heroui/react";
+import { EyeIcon, SaveIcon, PencilOffIcon, KeyboardIcon } from "lucide-react";
+import { addToast, Button, cn } from "@heroui/react";
 import dynamic from "next/dynamic";
-import { FileResponse, getFile} from "@/services/fileservice";
+import { FileResponse, getFile, updateFile } from "@/services/fileservice";
 import { useTheme } from "next-themes";
+import { useAppSettings } from "@/contexts/AppContext";
 
 // Dynamic import to avoid SSR issues
-const CodeMirrorEditor = dynamic(() => import('@/components/CodeMirrorEditor'), { 
+const CodeMirrorEditor = dynamic(() => import('@/components/CodeMirrorEditor'), {
     ssr: false,
     loading: () => <div className="flex-1 flex items-center justify-center">Loading editor...</div>
 });
@@ -22,6 +23,7 @@ export default function EditPage() {
     const filePath = decodePathParam(params.path as string | string[] | undefined);
     const router = useRouter();
     const { theme } = useTheme();
+    const { vimMode, setVimMode } = useAppSettings();
     const [markdown, setMarkdown] = useState<string | null>(null);
     const [hasChanges, setHasChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -36,7 +38,7 @@ export default function EditPage() {
         } else {
             document.title = siteConfig.name;
         }
-        
+
         return () => {
             document.title = siteConfig.name;
         };
@@ -65,10 +67,24 @@ export default function EditPage() {
         try {
             // Replace with your actual save API call
 
-            // await saveFile(filePath, contentToSave);
+            await updateFile(filePath, contentToSave);
             setHasChanges(false);
-            console.log('File saved successfully');
-            // Optional: Show success toast
+            addToast({
+                title: 'File saved successfully',
+                description: 'The file has been saved successfully',
+                color: 'success',
+                hideIcon: false,
+                timeout: 10000,
+                classNames: {
+                    base:cn([
+                        "bg-background/50 text-foreground",
+                        "backdrop-blur-sm",
+                        "border-none",
+                    ]),
+                    closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+                },
+
+            });
         } catch (error) {
             console.error('Error saving file:', error);
             // Optional: Show error toast
@@ -106,6 +122,17 @@ export default function EditPage() {
                     </div>
                     <div className="flex gap-2">
                         <Button
+                            isIconOnly
+                            variant={vimMode ? "solid" : "flat"}
+                            size="sm"
+                            color={vimMode ? "primary" : "default"}
+                            onPress={() => setVimMode(!vimMode)}
+                            aria-label="toggle vim mode"
+                            title={vimMode ? "Disable Vim mode" : "Enable Vim mode"}
+                        >
+                            <KeyboardIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
                             variant="flat"
                             size="sm"
                             color={hasChanges ? "primary" : "default"}
@@ -127,7 +154,7 @@ export default function EditPage() {
                     </div>
                 </div>
             </Header>
-            
+
             <div className="flex-1 overflow-hidden">
                 {markdown !== null ? (
                     <CodeMirrorEditor
@@ -136,6 +163,7 @@ export default function EditPage() {
                         onChange={handleChange}
                         onSave={handleSave}
                         theme={theme === 'dark' ? 'dark' : 'light'}
+                        useVim={vimMode}
                     />
                 ) : (
                     <div className="flex-1 flex items-center justify-center">

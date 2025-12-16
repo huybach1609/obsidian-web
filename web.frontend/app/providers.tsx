@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { PlatformProvider } from "@/contexts/PlatformContext";
 import { AppProvider } from "@/contexts/AppContext";
+import { ToastProvider } from "@heroui/react";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -29,6 +30,17 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <HeroUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <AppProvider>
+          <ToastProvider
+            toastProps={{
+              radius: "full",
+              color: "primary",
+              variant: "flat",
+              timeout: 2000,
+              hideIcon: false,
+              classNames: {
+                closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+              },
+            }} />
           <PlatformProvider>{children}</PlatformProvider>
         </AppProvider>
       </NextThemesProvider>

@@ -61,16 +61,6 @@ export default function NotesPage() {
                         </span>
                     </div>
                     <div>
-                        <Button
-                            isIconOnly
-                            variant="light"
-                            size="sm"
-                            onPress={() => router.push(`/notes/edit/${filePath}`)}
-                            aria-label="Edit"
-                        >
-                            <PencilIcon className="h-5 w-5" />
-                        </Button>
-
                         {/* wrap text button */}
                         <Button
                             isIconOnly
@@ -85,6 +75,16 @@ export default function NotesPage() {
                                 <AlignLeft className="h-5 w-5" />
                             )}
                         </Button>
+                        <Button
+                            isIconOnly
+                            variant="light"
+                            size="sm"
+                            onPress={() => router.push(`/notes/edit/${filePath}`)}
+                            aria-label="Edit"
+                        >
+                            <PencilIcon className="h-5 w-5" />
+                        </Button>
+
                     </div>
                 </div>
             </Header>

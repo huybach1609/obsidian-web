@@ -19,15 +19,18 @@ type AppContextValue = {
   theme: ThemeMode;
   accessToken: string | null;
   editMode: boolean;
+  vimMode: boolean;
   fileIndex: FileIndexDto[];
   setThemeMode: (mode: ThemeMode) => void;
   setAccessToken: (token: string | null) => void;
   setEditMode: (mode: boolean) => void;
+  setVimMode: (mode: boolean) => void;
   clearAppSettings: () => void;
 };
 
 const THEME_COOKIE_KEY = 'app-theme';
 const EDIT_MODE_COOKIE_KEY = 'app-edit-mode';
+const VIM_MODE_COOKIE_KEY = 'app-vim-mode';
 export const TOKEN_COOKIE_KEY = 'app-token';
 const COOKIE_MAX_AGE_DAYS = 30;
 
@@ -35,11 +38,13 @@ const defaultValue: AppContextValue = {
   theme: 'light',
   accessToken: null,
   editMode: false,
+  vimMode: false,
   fileIndex: [],
   setThemeMode: () => {},
   setAccessToken: () => {},
   clearAppSettings: () => {},
   setEditMode: () => {},
+  setVimMode: () => {},
 };
 
 const AppContext = createContext<AppContextValue>(defaultValue);
@@ -58,6 +63,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [fileIndex, setFileIndexState] = useState<FileIndexDto[]>([]);
   const [editMode, setEditModeState] = useState<boolean>(false);
+  const [vimMode, setVimModeState] = useState<boolean>(false);
 
   const initializedRef = useRef(false);
   const syncFromProviderRef = useRef(false);
@@ -85,6 +91,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const cookieEditMode = getCookie(EDIT_MODE_COOKIE_KEY);
     if (cookieEditMode != null) {
       setEditModeState(cookieEditMode === 'true');
+    }
+
+    const cookieVimMode = getCookie(VIM_MODE_COOKIE_KEY);
+    if (cookieVimMode != null) {
+      setVimModeState(cookieVimMode === 'true');
     }
   }, [resolvedTheme, setTheme]);
 
@@ -146,6 +157,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setAccessTokenState(null);
     deleteCookie(EDIT_MODE_COOKIE_KEY);
     setEditModeState(false);
+    deleteCookie(VIM_MODE_COOKIE_KEY);
+    setVimModeState(false);
     setTheme('light');
   }, [setTheme]);
 
@@ -154,17 +167,24 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setCookie(EDIT_MODE_COOKIE_KEY, String(mode), COOKIE_MAX_AGE_DAYS);
   }, []);
 
+  const updateVimMode = useCallback((mode: boolean) => {
+    setVimModeState(mode);
+    setCookie(VIM_MODE_COOKIE_KEY, String(mode), COOKIE_MAX_AGE_DAYS);
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
         theme: themeMode,
         accessToken,
         editMode,
+        vimMode,
         fileIndex,
         setThemeMode: updateThemeMode,
         setAccessToken: updateAccessToken,
         clearAppSettings,
         setEditMode: updateEditMode,
+        setVimMode: updateVimMode,
       }}
     >
       {children}
