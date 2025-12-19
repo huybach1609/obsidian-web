@@ -38,27 +38,58 @@ namespace backend.Controllers
 
         // GET /api/tree
         /// <summary>
-        ///  get list info of file/folder by path 
+        ///  Get list info of file/folder by path, optionally including nested children (tree) up to a given depth.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">Folder path relative to vault root.</param>
+        /// <param name="depth">
+        /// Maximum depth of the tree to load (1 = only this folder, 2 = this folder + its children, etc.).
+        /// Defaults to 1 to preserve existing behaviour.
+        /// </param>
         /// <returns></returns>
         [HttpGet("tree")]
-        public IActionResult GetTree([FromQuery] string? path)
+        public IActionResult GetTree([FromQuery] string? path, [FromQuery] int depth = 1)
         {
             var full = SafePath(path ?? "/");
 
             if (!Directory.Exists(full))
                 return Ok(Array.Empty<object>());
 
-            var entries = Directory.EnumerateFileSystemEntries(full)
-                .Select(p => new
-                {
-                    name = Path.GetFileName(p),
-                    path = Path.GetRelativePath(_vaultRoot, p).Replace("\\", "/"),
-                    isDir = Directory.Exists(p)
-                });
+            // Clamp depth to a sensible minimum to avoid invalid values
+            if (depth < 1)
+            {
+                depth = 1;
+            }
+
+            var entries = EnumerateTree(full, depth);
 
             return Ok(entries);
+        }
+
+        /// <summary>
+        /// Recursively enumerate a folder into a simple tree structure up to the specified depth.
+        /// </summary>
+        private IEnumerable<TreeEntry> EnumerateTree(string directoryFullPath, int depth)
+        {
+            foreach (var p in Directory.EnumerateFileSystemEntries(directoryFullPath))
+            {
+                var isDir = Directory.Exists(p);
+                var relativePath = Path.GetRelativePath(_vaultRoot, p).Replace("\\", "/");
+
+                var entry = new TreeEntry
+                {
+                    name = Path.GetFileName(p),
+                    path = relativePath,
+                    isDir = isDir
+                };
+
+                // If this is a directory and we still have depth remaining, load children
+                if (isDir && depth > 1)
+                {
+                    entry.children = EnumerateTree(p, depth - 1).ToList();
+                }
+
+                yield return entry;
+            }
         }
 
         // GET /api/folder
@@ -133,6 +164,53 @@ namespace backend.Controllers
             return Ok(new { ok = true });
         }
 
+        // POST /api/file/rename
+        /// <summary>
+        /// Rename a file or folder
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        [HttpPost("file/rename")]
+        public IActionResult RenameFileOrFolder([FromBody] RenameRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.OldPath) || string.IsNullOrWhiteSpace(req.NewPath))
+            {
+                return BadRequest(new { error = "OldPath and NewPath are required" });
+            }
+
+            var oldFull = SafePath(req.OldPath);
+            var newFull = SafePath(req.NewPath);
+
+            if (!System.IO.File.Exists(oldFull) && !Directory.Exists(oldFull))
+            {
+                return NotFound(new { error = "Source file or folder not found" });
+            }
+
+            try
+            {
+                var newDir = Path.GetDirectoryName(newFull);
+                if (!string.IsNullOrEmpty(newDir))
+                {
+                    Directory.CreateDirectory(newDir);
+                }
+
+                if (Directory.Exists(oldFull))
+                {
+                    Directory.Move(oldFull, newFull);
+                }
+                else
+                {
+                    System.IO.File.Move(oldFull, newFull);
+                }
+
+                return Ok(new { ok = true, oldPath = req.OldPath, newPath = req.NewPath });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Failed to rename: {ex.Message}" });
+            }
+        }
+
         // POST /api/folder
         [HttpPost("folder")]
         public IActionResult CreateFolder([FromBody] FolderCreate req)
@@ -145,6 +223,39 @@ namespace backend.Controllers
             Directory.CreateDirectory(full);
 
             return Ok(new { ok = true, path = req.Path });
+        }
+
+        // DELETE /api/file
+        /// <summary>
+        /// Delete a file or folder by path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        [HttpDelete("file")]
+        public IActionResult DeleteFile([FromQuery] string path)
+        {
+            var full = SafePath(path);
+
+            if (!System.IO.File.Exists(full) && !Directory.Exists(full))
+                return NotFound(new { error = "File or folder not found" });
+
+            try
+            {
+                if (Directory.Exists(full))
+                {
+                    Directory.Delete(full, recursive: true);
+                }
+                else
+                {
+                    System.IO.File.Delete(full);
+                }
+
+                return Ok(new { ok = true, path = path });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Failed to delete: {ex.Message}" });
+            }
         }
 
         // GET /api/preview
@@ -238,6 +349,18 @@ namespace backend.Controllers
 
 
 
+    }
+    public class RenameRequest
+    {
+        public string OldPath { get; set; }
+        public string NewPath { get; set; }
+    }
+    public class TreeEntry
+    {
+        public string name { get; set; }
+        public string path { get; set; }
+        public bool isDir { get; set; }
+        public List<TreeEntry>? children { get; set; }
     }
     public class FileIndexDto
     {

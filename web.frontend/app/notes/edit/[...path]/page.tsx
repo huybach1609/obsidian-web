@@ -5,13 +5,14 @@ import { decodePathParam } from "@/utils/stringhelper";
 import { useEffect, useState } from "react";
 import { siteConfig } from "@/config/site";
 import Header from "@/components/Header";
-import { EyeIcon, SaveIcon, PencilOffIcon, KeyboardIcon, PencilIcon } from "lucide-react";
+import { EyeIcon, SaveIcon, PencilOffIcon, PencilIcon } from "lucide-react";
 import { addToast, Button, cn } from "@heroui/react";
 import dynamic from "next/dynamic";
 import { FileResponse, getFile, updateFile } from "@/services/fileservice";
 import { useTheme } from "next-themes";
 import { useAppSettings } from "@/contexts/AppContext";
 import { twMerge } from "tailwind-merge";
+
 
 // Dynamic import to avoid SSR issues
 const CodeMirrorEditor = dynamic(() => import('@/components/CodeMirrorEditor'), {
@@ -29,7 +30,6 @@ export default function EditPage() {
     const [hasChanges, setHasChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    console.log('path', filePath);
 
     // Update browser tab title based on fileName
     useEffect(() => {
@@ -137,7 +137,7 @@ export default function EditPage() {
                             aria-label="toggle vim mode"
                             title={vimMode ? "Disable Vim mode" : "Enable Vim mode"}
                         >
-                            <KeyboardIcon className="h-4 w-4" />
+                            <img src="/Vimlogo.svg" alt="Vim" className="h-4 w-4" />
                         </Button>
                         <Button
                             variant="flat"

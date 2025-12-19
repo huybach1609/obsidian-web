@@ -4,17 +4,16 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Tree } from 'react-arborist';
 import type { NodeApi, TreeApi } from 'react-arborist';
 import { getTree } from '@/services/fileservice';
+import { buildRenamedPath, extractFileName, getParentPaths, sortByTypeAndName } from '@/utils/stringhelper';
 import { ChevronDownIcon, ChevronRightIcon, Ellipsis, EllipsisVerticalIcon, FileIcon, FolderIcon, Plus, TrashIcon } from 'lucide-react';
-import { Button, ButtonGroup, Spinner } from '@heroui/react';
+import { Button, ButtonGroup, DropdownTrigger, DropdownMenu, Dropdown, Spinner, DropdownItem, PopoverTrigger, Popover, PopoverContent, Input } from '@heroui/react';
 
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
+// region Type Definitions
 interface TreeItem {
   path: string;
   name: string;
   isDir: boolean;
+  children?: TreeItem[];
 }
 
 interface TreeNode {
@@ -31,7 +30,9 @@ interface TreeViewProps {
   onSelect: (path: string) => void;
   onCreateFile?: (parentPath: string) => void;
   onCreateFolder?: (parentPath: string) => void;
-  onShowOptions?: (node: TreeNode) => void;
+  onCopyLink?: (path: string) => void;
+  onRename?: (oldPath: string, newName: string) => void;
+  onRemoveFile?: (path: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -42,39 +43,12 @@ interface NodeComponentProps {
   loadingFolders?: Set<string>;
   onCreateFile?: (parentPath: string) => void;
   onCreateFolder?: (parentPath: string) => void;
-  onShowOptions?: (node: TreeNode) => void;
+  onCopyLink?: (path: string) => void;
+  onRename?: (oldPath: string, newName: string) => void;
+  onRemoveFile?: (path: string) => void;
+  onSelect?: (path: string) => void;
 }
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-const sortByTypeAndName = <T extends { isDir: boolean; name: string }>(items: T[]): T[] => {
-  return [...items].sort((a, b) => {
-    // Folders first, then files
-    if (a.isDir && !b.isDir) return -1;
-    if (!a.isDir && b.isDir) return 1;
-    // Same type: sort alphabetically (case-insensitive)
-    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
-  });
-};
-
-const getParentPaths = (filePath: string): string[] => {
-  if (!filePath || filePath === '/') return [];
-
-  const parts = filePath.split('/').filter(p => p);
-  const parentPaths: string[] = [];
-
-  for (let i = 1; i <= parts.length; i++) {
-    parentPaths.push('/' + parts.slice(0, i).join('/'));
-  }
-
-  return parentPaths;
-};
-// ============================================================================
-// CUSTOM HOOKS
-// ============================================================================
-
+// region Custom Hooks
 const useContainerHeight = (dependencies: any[]) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
@@ -97,7 +71,7 @@ const useContainerHeight = (dependencies: any[]) => {
 
     const resizeObserver = new ResizeObserver(updateHeight);
     const parentElement = containerRef.current?.parentElement;
-    
+
     if (parentElement) resizeObserver.observe(parentElement);
     if (containerRef.current) resizeObserver.observe(containerRef.current);
 
@@ -119,6 +93,28 @@ const useTreeData = (isAuthenticated: boolean, path: string) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Helper function to recursively process nested children and collect them into a map
+  const processNestedChildren = useCallback((items: TreeItem[], parentPath: string, childrenMap: Map<string, TreeNode[]>) => {
+    const children: TreeNode[] = items.map((item: TreeItem) => ({
+      id: item.path,
+      name: item.name,
+      path: item.path,
+      isDir: item.isDir,
+      // Folders must always have children array (even if empty) for react-arborist to treat them as folders
+      children: item.isDir ? [] : undefined,
+    }));
+
+    // Add children to the map
+    childrenMap.set(parentPath, children);
+
+    // Recursively process nested children
+    items.forEach((item: TreeItem) => {
+      if (item.isDir && item.children && item.children.length > 0) {
+        processNestedChildren(item.children, item.path, childrenMap);
+      }
+    });
+  }, []);
+
   const fetchTree = useCallback(async (folderPath: string, isRoot: boolean = false) => {
     if (!isAuthenticated) return;
 
@@ -130,25 +126,55 @@ const useTreeData = (isAuthenticated: boolean, path: string) => {
     setError(null);
 
     try {
-      const data = await getTree(folderPath);
+      // Request depth=2 to get 2 levels of tree for better loading
+      const data = await getTree(folderPath, 2);
+
+      console.log(data);
+
       const sortedData = sortByTypeAndName(data);
+
+      // Collect all nested children into a map first
+      const newChildrenMap = new Map<string, TreeNode[]>();
 
       if (isRoot) {
         setRootItems(sortedData);
+        // Process nested children for root items
+        sortedData.forEach((item: TreeItem) => {
+          if (item.isDir && item.children && item.children.length > 0) {
+            processNestedChildren(item.children, item.path, newChildrenMap);
+          }
+        });
       } else {
         const children: TreeNode[] = sortedData.map((item: TreeItem) => ({
           id: item.path,
           name: item.name,
           path: item.path,
           isDir: item.isDir,
+          // Folders must always have children array (even if empty) for react-arborist to treat them as folders
           children: item.isDir ? [] : undefined,
         }));
 
-        setLoadedChildren(prev => new Map(prev).set(folderPath, children));
+        newChildrenMap.set(folderPath, children);
+
+        // Process nested children
+        sortedData.forEach((item: TreeItem) => {
+          if (item.isDir && item.children && item.children.length > 0) {
+            processNestedChildren(item.children, item.path, newChildrenMap);
+          }
+        });
       }
+
+      // Update loadedChildren state once with all collected children
+      setLoadedChildren(prev => {
+        const next = new Map(prev);
+        newChildrenMap.forEach((children, path) => {
+          next.set(path, children);
+        });
+        return next;
+      });
     } catch (err: any) {
       console.error('Error fetching tree:', err);
-      
+
       if (err.response?.status === 401 || err.response?.status === 403) {
         setError('Authentication required. Please login.');
       } else if (err.response?.status === 500) {
@@ -167,7 +193,43 @@ const useTreeData = (isAuthenticated: boolean, path: string) => {
         });
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, processNestedChildren]);
+
+  // Update the tree data in the state when a node is renamed
+  const renameNodeInState = useCallback((oldPath: string, newName: string) => {
+    const newPath = buildRenamedPath(oldPath, newName);
+    // Update root items
+    setRootItems(prev =>
+      prev.map(item =>
+        item.path === oldPath
+          ? {
+            ...item,
+            name: newName,
+            path: newPath,
+          }
+          : item
+      )
+    );
+
+    // Update any loaded children entries that match this path
+    setLoadedChildren(prev => {
+      const next = new Map(prev);
+
+      next.forEach((children, folderPath) => {
+        const updatedChildren = children.map(child =>
+          child.path === oldPath
+            ? {
+              ...child,
+              name: newName,
+              path: newPath,
+            }
+            : child
+        );
+        next.set(folderPath, updatedChildren);
+      });
+      return next;
+    });
+  }, []);
 
   // Fetch root on mount
   useEffect(() => {
@@ -188,85 +250,140 @@ const useTreeData = (isAuthenticated: boolean, path: string) => {
     error,
     loading,
     fetchTree,
+    renameNodeInState,
   };
 };
 
-
-// ============================================================================
-// COMPONENTS
-// ============================================================================
-
-const RightElement = ({ 
-  node, 
-  onCreateFile, 
-  onCreateFolder, 
-  onShowOptions 
-}: { 
+// region Components
+const RightElement = ({
+  node,
+  onCreateFile,
+  onCreateFolder,
+  onCopyLink,
+  onRenameClick,
+  onRemoveFile,
+  onSelect
+}: {
   node: NodeApi<TreeNode>;
   onCreateFile?: (parentPath: string) => void;
   onCreateFolder?: (parentPath: string) => void;
-  onShowOptions?: (node: TreeNode) => void;
+  onCopyLink?: (path: string) => void;
+  onRenameClick?: (path: string) => void;
+  onRemoveFile?: (path: string) => void;
+  onSelect?: (path: string) => void;
 }) => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // For folders: create file inside
     // For files: create file in parent directory
-    const targetPath = node.data.isDir 
-      ? node.data.path 
+    const targetPath = node.data.isDir
+      ? node.data.path
       : node.data.path.substring(0, node.data.path.lastIndexOf('/')) || '/';
-    
+
     if (node.data.isDir && onCreateFolder) {
       onCreateFolder(targetPath);
     } else if (onCreateFile) {
-      onCreateFile(targetPath);
+      onCreateFile?.(targetPath);
     }
-  };
-
-  const handleOptionsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    node.select();
-    onShowOptions?.(node.data);
   };
 
   return (
     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-      <button
-        className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
-        onClick={handleOptionsClick}
-        title="More options"
-        aria-label="More options"
-      >
-        <Ellipsis className="h-3 text-foreground" />
-      </button>
-      <button
-        className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
-        onClick={handleCreateClick}
-        title={node.data.isDir ? "New file or folder" : "New file"}
-        aria-label={node.data.isDir ? "New file or folder" : "New file"}
-      >
-        <Plus className="h-3 text-foreground" />
-      </button>
+      {/* FOLDERS */}
+      {node.data.isDir && (
+        <>
+          <Dropdown
+            classNames={{
+              base: "before:bg-default-200", // change arrow background
+              content:
+                "bg-background/90 text-foreground border-none backdrop-blur-xs",
+            }}
+          >
+            <DropdownTrigger>
+              <button
+                className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
+                title="More options"
+                aria-label="More options"
+              >
+                <Ellipsis className="h-3 text-foreground" />
+              </button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Static Actions"
+            >
+              <DropdownItem key="copy" onPress={() => onCopyLink?.(node.data.path)}>Copy link</DropdownItem>
+              <DropdownItem key="rename" onPress={() => onRenameClick?.(node.data.path)}>Rename folder</DropdownItem>
+              <DropdownItem key="delete" className="text-danger" color="danger" onPress={() => onRemoveFile?.(node.data.path)}>
+                Delete folder
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+          <button
+            className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
+            onClick={handleCreateClick}
+            title="New file or folder"
+            aria-label="New file or folder"
+          >
+            <Plus className="h-3 text-foreground" />
+          </button>
+        </>
+      )}
+      {/* FILES */}
+      {!node.data.isDir && (
+        <>
+          <Dropdown 
+            classNames={{
+              base: "before:bg-default-200", // change arrow background
+              content:
+                "bg-background/90 text-foreground border-none backdrop-blur-xs",
+            }}>
+            <DropdownTrigger>
+              <button
+                className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
+                title="More options"
+                aria-label="More options"
+              >
+                <Ellipsis className="h-3 text-foreground" />
+              </button>
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Static Actions">
+              <DropdownItem key="copy" onPress={() => onCopyLink?.(node.data.path)}>Copy link</DropdownItem>
+              <DropdownItem key="edit_file" onPress={() => onSelect?.(node.data.path)}>Edit file</DropdownItem>
+              <DropdownItem key="rename_file" onPress={() => onRenameClick?.(node.data.path)}>Rename file</DropdownItem>
+              <DropdownItem key="delete_file" onPress={() => onRemoveFile?.(node.data.path)}>Delete file</DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        </>
+      )}
+
     </div>
   );
 };
 
-const Node = ({ 
-  node, 
-  style, 
-  dragHandle, 
+const Node = ({
+  node,
+  style,
+  dragHandle,
   loadingFolders,
   onCreateFile,
   onCreateFolder,
-  onShowOptions,
+  onCopyLink,
+  onRename,
+  onRemoveFile,
+  onSelect,
 }: NodeComponentProps) => {
-  const Icon = node.isInternal 
-    ? <FolderIcon className="w-4 h-4 text-primary" /> 
+  // isInternal is true for folders
+  const Icon = node.isInternal && node.data.isDir
+    ? <FolderIcon className="w-4 h-4 text-primary" />
     : <FileIcon className="w-4 h-4 text-foreground" />;
-  
+
   const isSelected = node.isSelected;
   const isFocused = node.isFocused;
   const isLoading = node.isInternal && loadingFolders?.has(node.data.path);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [newName, setNewName] = useState('');
+  const renameInputRef = useRef<HTMLInputElement | null>(null);
+
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -278,61 +395,139 @@ const Node = ({
     }
   };
 
+  const handleRenameSubmit = () => {
+    if (newName.trim() && newName !== node.data.name) {
+      onRename?.(node.data.path, newName.trim());
+    }
+    setIsRenameOpen(false);
+    setNewName('');
+  };
+
+  const handleRenameCancel = () => {
+    setIsRenameOpen(false);
+    setNewName('');
+  };
+
+  const handleRenameClick = () => {
+    setIsRenameOpen(true);
+    // setNewName();
+  };
+
+  useEffect(() => {
+    if (isRenameOpen) {
+      setNewName(extractFileName(node.data.name) || '');
+      // Delay focus slightly to allow dropdown/row re-renders to settle
+      const timer = setTimeout(() => {
+        if (renameInputRef.current) {
+          // debugger;
+          renameInputRef.current.focus();
+          renameInputRef.current.select();
+        }
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isRenameOpen]);
+
+
   return (
-    <div
-      ref={dragHandle}
-      style={style}
-      className={`group flex items-center gap-2 px-2 py-1 cursor-pointer select-none rounded-lg hover:bg-primary/10 
-        ${isSelected ? 'bg-primary/80' : isFocused ? 'bg-primary' : 'hover:bg-primary'} 
+    <>
+      <div
+        ref={dragHandle}
+        style={{
+          ...style,
+          transition: 'top 0.05s ease-in',
+        }}
+        className={`group flex items-center gap-3 px-2 py-1 cursor-pointer select-none rounded-lg hover:bg-primary/10 
+        ${isSelected ? 'bg-primary/79' : isFocused ? 'bg-primary' : 'hover:bg-primary'} 
         ${node.isInternal ? 'font-medium' : ''}`}
-      onClick={handleClick}
-    >
-      {/* Arrow indicator */}
-      <span className="flex-shrink-0 w-4 text-center text-foreground">
-        {node.isInternal && (
-          isLoading ? (
-            <Spinner size="sm" color="primary" className="h-4 w-4 mx-auto" variant="simple" />
-          ) : node.isOpen ? (
-            <ChevronDownIcon className="w-4 h-4 text-foreground" />
+        onClick={handleClick}
+      >
+
+        {/* Arrow indicator */}
+        <span className="flex-shrink-1 w-4 text-center text-foreground">
+          {node.isInternal && (
+            isLoading ? (
+              <Spinner size="sm" color="primary" className="h-5 w-4 mx-auto" variant="simple" />
+            ) : node.isOpen ? (
+              <ChevronDownIcon className="w-5 h-4 text-foreground" />
+            ) : (
+              <ChevronRightIcon className="w-5 h-4 text-foreground" />
+            )
+          )}
+        </span>
+
+        {/* Icon */}
+        <span className="flex-shrink-1">{Icon}</span>
+
+        {/* Name */}
+        <span
+          className="flex-2 truncate text-sm text-foreground"
+          // Prevent clicks inside the rename input from bubbling and triggering handleClick
+          onClick={(e) => {
+            if (isRenameOpen) {
+              e.stopPropagation();
+            }
+          }}
+        >
+          {isRenameOpen ? (
+            //rename input
+            <input
+              ref={renameInputRef}
+              type="text"
+              value={newName}
+              className="
+               w-full outline-none rounded-sm
+               bg-foreground/80 text-background  
+               "
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                // Prevent react-arborist tree from handling keyboard shortcuts
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  handleRenameSubmit();
+                } else if (e.key === 'Escape') {
+                  handleRenameCancel();
+                }
+              }}
+            />
           ) : (
-            <ChevronRightIcon className="w-4 h-4 text-foreground" />
-          )
-        )}
-      </span>
-      
-      {/* Icon */}
-      <span className="flex-shrink-0">{Icon}</span>
-      
-      {/* Name */}
-      <span className="flex-1 truncate text-sm text-foreground">{node.data.name}</span>
-      
-      {/* Actions */}
-      <RightElement 
-        node={node} 
-        onCreateFile={onCreateFile}
-        onCreateFolder={onCreateFolder}
-        onShowOptions={onShowOptions}
-      />
-    </div>
+            node.data.name
+          )}
+        </span>
+
+        {/* Actions */}
+        <RightElement
+          node={node}
+          onCopyLink={onCopyLink}
+          onRenameClick={handleRenameClick}
+          onRemoveFile={onRemoveFile}
+          onCreateFile={onCreateFile}
+          onCreateFolder={onCreateFolder}
+          onSelect={onSelect}
+        />
+      </div>
+    </>
   );
 };
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-
-export default function TreeView({ 
-  path = '/', 
-  selectedPath, 
-  onSelect, 
+// region Main Component
+export default function TreeView({
+  path = '/',
+  selectedPath,
+  onSelect,
   onCreateFile,
   onCreateFolder,
-  onShowOptions,
-  isAuthenticated 
+  onCopyLink,
+  onRename,
+  onRemoveFile,
+  isAuthenticated
 }: TreeViewProps) {
   const treeRef = useRef<TreeApi<TreeNode>>(null);
   const { containerRef, containerHeight } = useContainerHeight([]);
-  
+
   const {
     rootItems,
     loadedChildren,
@@ -340,6 +535,7 @@ export default function TreeView({
     error,
     loading,
     fetchTree,
+    renameNodeInState,
   } = useTreeData(isAuthenticated, path);
 
   // Build tree structure
@@ -349,7 +545,7 @@ export default function TreeView({
       name: item.name,
       path: item.path,
       isDir: item.isDir,
-      children: item.isDir 
+      children: item.isDir
         ? (loadedChildren.get(item.path) || [])
         : undefined,
     }));
@@ -357,10 +553,18 @@ export default function TreeView({
     const populateChildren = (nodes: TreeNode[]): TreeNode[] => {
       const sorted = sortByTypeAndName(nodes);
       return sorted.map(node => {
+        // If it's a folder and we have loaded children for it, populate them
         if (node.isDir && Array.isArray(node.children) && loadedChildren.has(node.path)) {
           return {
             ...node,
             children: populateChildren(loadedChildren.get(node.path)!),
+          };
+        }
+        // Ensure folders always have children array (even if empty) so react-arborist treats them as folders
+        if (node.isDir && !Array.isArray(node.children)) {
+          return {
+            ...node,
+            children: [],
           };
         }
         return node;
@@ -393,6 +597,17 @@ export default function TreeView({
       onSelect(node.data.path);
     }
   }, [onSelect]);
+
+  const handleRenameInTree = useCallback(
+    (oldPath: string, newName: string) => {
+      // Let parent handle backend rename / navigation
+      onRename?.(oldPath, newName);
+      // Update local tree data so the label changes without reload
+      renameNodeInState(oldPath, newName);
+    },
+    [onRename, renameNodeInState]
+  );
+
 
   // Auto-open to selected path
   useEffect(() => {
@@ -455,17 +670,17 @@ export default function TreeView({
       {loading && rootItems.length === 0 && (
         <p className="text-foreground text-sm">Loading...</p>
       )}
-      
+
       {error && (
         <p className="text-error text-sm mb-3 bg-error/10 p-2 rounded border border-error/20">
           {error}
         </p>
       )}
-      
+
       {!loading && !error && treeData.length === 0 && (
         <p className="text-foreground text-sm">No files found</p>
       )}
-      
+
       {treeData.length > 0 && (
         <div ref={containerRef} className="flex-1 min-h-0" style={{ height: '100%' }}>
           <Tree
@@ -480,13 +695,17 @@ export default function TreeView({
             openByDefault={false}
           >
             {(props) => (
-              <Node 
-                {...props} 
+              <Node
+                {...props}
+                onRename={handleRenameInTree}
                 loadingFolders={loadingFolders}
                 onCreateFile={onCreateFile}
                 onCreateFolder={onCreateFolder}
-                onShowOptions={onShowOptions}
+                onCopyLink={onCopyLink}
+                onRemoveFile={onRemoveFile}
+                onSelect={onSelect}
               />
+
             )}
           </Tree>
         </div>

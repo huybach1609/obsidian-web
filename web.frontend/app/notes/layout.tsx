@@ -5,6 +5,8 @@ import { CommandMenu } from "@/components/CommandMenu";
 import TreeView from "@/components/TreeView";
 import { useAppSettings } from "@/contexts/AppContext";
 import { usePlatform } from "@/contexts/PlatformContext";
+import { renameFile } from "@/services/fileservice";
+import { buildRenamedPath } from "@/utils/stringhelper";
 import { useRouter, useParams } from "next/navigation";
 
 export default function NotesLayout({ children }: { children: React.ReactNode }) {
@@ -37,6 +39,25 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
             </div>
         );
     }
+
+    const handleRename = async (oldPath: string, newName: string) => {
+        const newPath = buildRenamedPath(oldPath, newName);
+
+        try {
+            await renameFile(oldPath, newPath);
+
+            // If we are currently viewing this file, navigate to the new path
+            if (selectedPath === oldPath) {
+                if (editMode) {
+                    router.push(`/notes/edit/${newPath}`);
+                } else {
+                    router.push(`/notes/${newPath}`);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to rename file", err);
+        }
+    };
     // Desktop: show sidebar and content
     return (
         <div className="flex h-screen bg-background text-foreground">
@@ -56,6 +77,13 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
                   router.push(`/notes/${path}`)
                 }
             }}
+              onCopyLink={(path) => {
+                console.log("copy link", path);
+              }}
+              onRemoveFile={(path) => {
+                console.log("remove file", path);
+              }}
+              onRename={handleRename}
               isAuthenticated={true}
             />
           </div>
