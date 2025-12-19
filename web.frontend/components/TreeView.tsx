@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Tree } from 'react-arborist';
 import type { NodeApi, TreeApi } from 'react-arborist';
 import { getTree } from '@/services/fileservice';
-import { ChevronDownIcon, ChevronRightIcon, FileIcon, FolderIcon } from 'lucide-react';
-import { Spinner } from '@heroui/react';
+import { ChevronDownIcon, ChevronRightIcon, Ellipsis, EllipsisVerticalIcon, FileIcon, FolderIcon, Plus, TrashIcon } from 'lucide-react';
+import { Button, ButtonGroup, Spinner } from '@heroui/react';
 
 interface TreeItem {
   path: string;
@@ -214,7 +214,6 @@ export default function TreeView({ path = '/', selectedPath, onSelect, isAuthent
     }
   }, [loadedChildren, loadingFolders, fetchTree]);
 
-
   // Build tree data structure
   const treeData = useMemo(() => {
     // Convert root items to tree nodes (already sorted from API)
@@ -369,12 +368,29 @@ export default function TreeView({ path = '/', selectedPath, onSelect, isAuthent
   );
 }
 
+
+const RightElement = ({ node }: { node: NodeApi<TreeNode> }) => {
+  return <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <button className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center" onClick={() => {
+      node.select();
+    }}>
+      <Ellipsis className="h-3 text-foreground" />
+    </button>
+    <button className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center" onClick={() => {
+      node.select();
+    }}>
+      <Plus className="h-3 text-foreground" />
+    </button>
+  </div>;
+};
+
 // Custom node renderer
-function Node({ node, style, dragHandle, loadingFolders }: {
+function Node({ node, style, dragHandle, loadingFolders, rightElement }: {
   node: NodeApi<TreeNode>;
   style: React.CSSProperties;
   dragHandle?: any;
   loadingFolders?: Set<string>;
+  rightElement?: React.ReactNode | ((node: NodeApi<TreeNode>) => React.ReactNode);
 }) {
   const Icon = node.isInternal ? <FolderIcon className="w-4 h-4 text-primary" /> : <FileIcon className="w-4 h-4 text-foreground" />;
   const isSelected = node.isSelected;
@@ -385,7 +401,7 @@ function Node({ node, style, dragHandle, loadingFolders }: {
     <div
       ref={dragHandle}
       style={style}
-      className={`flex items-center gap-2 px-2 py-1 cursor-pointer select-none rounded-lg hover:bg-primary/10 
+      className={`group flex items-center gap-2 px-2 py-1 cursor-pointer select-none rounded-lg hover:bg-primary/10 
         ${isSelected ? 'bg-primary/80' : isFocused ? 'bg-primary' : 'hover:bg-primary'} ${node.isInternal ? 'font-medium' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
@@ -397,7 +413,6 @@ function Node({ node, style, dragHandle, loadingFolders }: {
           node.select();
           node.activate();
         }
-
       }}
     >
       {/* Arrow indicator for folders */}
@@ -416,6 +431,7 @@ function Node({ node, style, dragHandle, loadingFolders }: {
       <span className="flex-shrink-0">{Icon}</span>
       {/* Name */}
       <span className="flex-1 truncate text-sm text-foreground">{node.data.name}</span>
+      <RightElement node={node} />
     </div>
   );
 }
