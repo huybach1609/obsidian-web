@@ -25,7 +25,12 @@ export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () =>
     return (
       <Header className="flex items-center justify-between ">
         <div className="flex items-center justify-between h-full">
-          <Dropdown placement="bottom-start">
+          <Dropdown placement="bottom-start"
+            classNames={{
+              base: "before:bg-default-200", // change arrow background
+              content:
+                "bg-background/90 text-foreground border-none backdrop-blur-xs",
+            }}>
             <DropdownTrigger>
               <User
                 as="button"
@@ -85,7 +90,12 @@ export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () =>
   return (
     <Header>
       <div className="flex items-center justify-between h-full">
-        <Dropdown placement="bottom-start">
+        <Dropdown placement="bottom-start"
+          classNames={{
+            base: "before:bg-default-200", // change arrow background
+            content:
+              "bg-background/90 text-foreground border-none backdrop-blur-xs",
+          }}>
           <DropdownTrigger>
             <User
               as="button"

@@ -9,6 +9,7 @@ import { siteConfig } from "@/config/site";
 import { decodePathParam } from "@/utils/stringhelper";
 
 import '../../../styles/markdown.css';
+import AnimatedContent from "@/components/AnimatedContent";
 
 export default function NotesPage() {
 
@@ -50,8 +51,8 @@ export default function NotesPage() {
     }, [filePath]);
 
     return (
-        <div className="flex flex-col h-full bg-background text-foreground">
-            <Header>
+        <div className="h-screen overflow-hidden relative flex flex-col">
+            <Header className="top-0 z-10 absolute w-full bg-background/50 backdrop-blur-sm">
                 <div className="flex items-center justify-between h-full w-full">
                     <div className="flex items-center gap-2">
                         <EyeIcon className="h-5 w-5" />
@@ -89,22 +90,20 @@ export default function NotesPage() {
                 </div>
             </Header>
 
-            {loading ? (
-                <div className="flex items-center justify-center h-[90%]">
-                    <Spinner />
-                </div>
-            ) : (
-                <ScrollShadow className="flex-1">
+
+            <AnimatedContent animationType="blur" isContentLoading={loading}>
+                <div className="h-full overflow-y-auto">
+                    <div className="h-24 bg-transparent"></div>
                     <div
                         id="preview-area"
-                        className={`flex-1 overflow-auto p-4 ${textWrap
+                        className={`flex-1  p-4 ${textWrap
                             ? 'break-words whitespace-pre-wrap'
                             : 'whitespace-pre overflow-x-auto'
                             }`}
                         dangerouslySetInnerHTML={{ __html: content }}
                     />
-                </ScrollShadow>
-            )}
+                </div>
+            </AnimatedContent>
         </div>
     );
 }
