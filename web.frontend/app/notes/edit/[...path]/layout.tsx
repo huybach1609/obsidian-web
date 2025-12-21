@@ -1,6 +1,6 @@
 'use client';
 
-import { EditPageProvider } from "@/contexts/EditPageContext";
+import { EditPageProvider, useEditPage } from "@/contexts/EditPageContext";
 import EditHeader from "@/components/EditHeader";
 import AnimatedContent from "@/components/AnimatedContent";
 import { useState } from "react";
@@ -11,18 +11,28 @@ export default function EditLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Options: 'fade', 'zoomIn', 'zoomOut', 'slideLeft', 'slideRight', 
-  // 'slideUp', 'slideDown', 'rotate', 'flip', 'blur', 'scaleRotate', 'bounce'
-  const [animationType] = useState<AnimationType>('blur');
+
 
   return (
     <EditPageProvider>
       <div className="h-screen overflow-hidden relative flex flex-col">
         <EditHeader />
-        <AnimatedContent animationType={animationType}>
+        <EditLayoutContent>
           {children}
-        </AnimatedContent>
+        </EditLayoutContent>
       </div>
     </EditPageProvider>
+  );
+}
+const EditLayoutContent = ({ children }: { children: React.ReactNode }) => {
+  // Options: 'fade', 'zoomIn', 'zoomOut', 'slideLeft', 'slideRight', 
+  // 'slideUp', 'slideDown', 'rotate', 'flip', 'blur', 'scaleRotate', 'bounce'
+  const [animationType] = useState<AnimationType>('blur');
+  const { isContentLoading } = useEditPage();
+
+  return (
+    <AnimatedContent animationType={animationType} isContentLoading={isContentLoading}>
+      {children}
+    </AnimatedContent>
   );
 }

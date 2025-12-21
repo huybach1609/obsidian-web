@@ -6,15 +6,16 @@ import { useEditPage } from "@/contexts/EditPageContext";
 import { useEffect, useState, useRef } from "react";
 import { animations, AnimationType } from "@/utils/animations";
 
-export default function AnimatedContent({ 
-  children, 
-  animationType = 'fade' 
-}: { 
+export default function AnimatedContent({
+  children,
+  animationType = 'fade',
+  isContentLoading = false,
+}: {
   children: React.ReactNode;
   animationType?: AnimationType;
+  isContentLoading?: boolean;
 }) {
   const pathname = usePathname();
-  const { isContentLoading } = useEditPage();
   const [animationKey, setAnimationKey] = useState(pathname);
   const previousPathnameRef = useRef(pathname);
 
