@@ -7,6 +7,7 @@ import { getTree } from '@/services/fileservice';
 import { buildRenamedPath, extractFileName, getParentPaths, sortByTypeAndName } from '@/utils/stringhelper';
 import { ChevronDownIcon, ChevronRightIcon, Ellipsis, EllipsisVerticalIcon, FileIcon, FolderIcon, Plus, TrashIcon } from 'lucide-react';
 import { Button, ButtonGroup, DropdownTrigger, DropdownMenu, Dropdown, Spinner, DropdownItem, PopoverTrigger, Popover, PopoverContent, Input } from '@heroui/react';
+import { useCreatePage } from '@/contexts/CreatePageContext';
 
 // region Type Definitions
 interface TreeItem {
@@ -33,6 +34,7 @@ interface TreeViewProps {
   onCopyLink?: (path: string) => void;
   onRename?: (oldPath: string, newName: string) => void;
   onRemoveFile?: (path: string) => void;
+  onOpenCreatePage: (path: string) => void;
   isAuthenticated: boolean;
 }
 
@@ -47,8 +49,9 @@ interface NodeComponentProps {
   onRename?: (oldPath: string, newName: string) => void;
   onRemoveFile?: (path: string) => void;
   onSelect?: (path: string) => void;
+  onOpenCreatePage?: (path: string) => void;
 }
-// region Custom Hooks
+// #region Custom Hooks
 const useContainerHeight = (dependencies: any[]) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(600);
@@ -253,8 +256,9 @@ const useTreeData = (isAuthenticated: boolean, path: string) => {
     renameNodeInState,
   };
 };
+// #endregion 
 
-// region Components
+// #region Components
 const RightElement = ({
   node,
   onCreateFile,
@@ -262,7 +266,8 @@ const RightElement = ({
   onCopyLink,
   onRenameClick,
   onRemoveFile,
-  onSelect
+  onSelect,
+  onOpenCreatePage,
 }: {
   node: NodeApi<TreeNode>;
   onCreateFile?: (parentPath: string) => void;
@@ -271,6 +276,7 @@ const RightElement = ({
   onRenameClick?: (path: string) => void;
   onRemoveFile?: (path: string) => void;
   onSelect?: (path: string) => void;
+  onOpenCreatePage?: (path: string) => void;
 }) => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -320,7 +326,7 @@ const RightElement = ({
           </Dropdown>
           <button
             className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
-            onClick={handleCreateClick}
+            onClick={() => onOpenCreatePage?.(node.data.path)}
             title="New file or folder"
             aria-label="New file or folder"
           >
@@ -371,6 +377,7 @@ const Node = ({
   onRename,
   onRemoveFile,
   onSelect,
+  onOpenCreatePage,
 }: NodeComponentProps) => {
   // isInternal is true for folders
   const Icon = node.isInternal && node.data.isDir
@@ -507,13 +514,15 @@ const Node = ({
           onCreateFile={onCreateFile}
           onCreateFolder={onCreateFolder}
           onSelect={onSelect}
+          onOpenCreatePage={onOpenCreatePage}
         />
       </div>
     </>
   );
 };
+// #endregion 
 
-// region Main Component
+// #region Main Component
 export default function TreeView({
   path = '/',
   selectedPath,
@@ -523,6 +532,7 @@ export default function TreeView({
   onCopyLink,
   onRename,
   onRemoveFile,
+  onOpenCreatePage,
   isAuthenticated
 }: TreeViewProps) {
   const treeRef = useRef<TreeApi<TreeNode>>(null);
@@ -537,6 +547,7 @@ export default function TreeView({
     fetchTree,
     renameNodeInState,
   } = useTreeData(isAuthenticated, path);
+
 
   // Build tree structure
   const treeData = useMemo(() => {
@@ -704,6 +715,7 @@ export default function TreeView({
                 onCopyLink={onCopyLink}
                 onRemoveFile={onRemoveFile}
                 onSelect={onSelect}
+                onOpenCreatePage={onOpenCreatePage}
               />
 
             )}
@@ -713,3 +725,4 @@ export default function TreeView({
     </div>
   );
 }
+// #endregion 

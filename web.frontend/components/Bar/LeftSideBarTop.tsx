@@ -3,10 +3,20 @@ import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, User } f
 import { useIsSSR } from "@react-aria/ssr";
 import { useTheme } from "next-themes";
 import Header from "../Header";
-import { EllipsisVertical, MoonIcon, SunIcon } from "lucide-react";
+import { EllipsisVertical, MoonIcon, SunIcon, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import router from "next/router";
 
-export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () => void, isMobile: boolean }) => {
+export const LeftSideBarTop = ({
+  handleLogout,
+  isMobile,
+  onToggleSidebar,
+  isCollapsed
+}: {
+  handleLogout: () => void,
+  isMobile: boolean,
+  onToggleSidebar?: () => void,
+  isCollapsed?: boolean
+}) => {
   const { theme, resolvedTheme } = useTheme();
   const { setThemeMode, editMode, setEditMode } = useAppSettings();
   const isSSR = useIsSSR();
@@ -89,7 +99,7 @@ export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () =>
 
   return (
     <Header>
-      <div className="flex items-center justify-between h-full">
+      <div className="flex items-center justify-between h-full gap-2">
         <Dropdown placement="bottom-start"
           classNames={{
             base: "before:bg-default-200", // change arrow background
@@ -139,6 +149,23 @@ export const LeftSideBarTop = ({ handleLogout, isMobile }: { handleLogout: () =>
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
+
+        {/* Sidebar Toggle Button */}
+        {onToggleSidebar && (
+          <Button
+            variant="light"
+            isIconOnly
+            onPress={onToggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            {isCollapsed ? (
+              <PanelLeftOpen className="h-5 w-5 text-foreground" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5 text-foreground" />
+            )}
+          </Button>
+        )}
+
       </div>
     </Header>
   );
