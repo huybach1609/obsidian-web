@@ -25,6 +25,11 @@ export async function getFile(path: string): Promise<FileResponse> {
   return data;
 }
 
+export async function createFile(path: string, content: string = '') {
+  const { data } = await axios.post<{ path: string }>('/file', { path, content });
+  return data;
+}
+
 export async function updateFile(path: string, content: string) {
   await axios.put('/file', { path, content });
 }
@@ -40,6 +45,11 @@ export async function getFilePreview(path: string) {
 
 export async function removeFile(path: string) {
   await axios.delete('/file', { params: { path } });
+}
+
+export async function createFolder(path: string) {
+  const { data } = await axios.post<{ ok: boolean; path: string }>('/folder', { path });
+  return data;
 }
 
 export async function copyLink(path: string): Promise<string> {

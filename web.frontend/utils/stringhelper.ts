@@ -50,6 +50,7 @@ export const getParentPaths = (filePath: string): string[] => {
 
   return parentPaths;
 };
+
 export const extractFileName = (path: string) => {
   return path.split('/').pop()?.split('.').shift();
 };

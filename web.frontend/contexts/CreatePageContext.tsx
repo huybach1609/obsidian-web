@@ -13,6 +13,10 @@ interface CreatePageContextType {
   setIsContentLoading: (value: boolean) => void;
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
+  fileName: string;
+  setFileName: (value: string) => void;
+  content: string;
+  setContent: (value: string) => void;
 }
 
 const CreatePageContext = createContext<CreatePageContextType | undefined>(undefined);
@@ -24,6 +28,8 @@ export function CreatePageProvider({ children }: { children: ReactNode }) {
   const [isSaving, setIsSaving] = useState(false);
   const [onSave, setOnSave] = useState<(() => void) | null>(null);
   const [isContentLoading, setIsContentLoading] = useState(false);
+  const [fileName, setFileName] = useState<string>("");
+  const [content, setContent] = useState<string>("");
 
   return (
     <CreatePageContext.Provider
@@ -38,6 +44,10 @@ export function CreatePageProvider({ children }: { children: ReactNode }) {
         setIsContentLoading,
         isOpen,
         setIsOpen,
+        fileName,
+        setFileName,
+        content,
+        setContent,
       }}
     >
       {children}

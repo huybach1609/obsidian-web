@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Tree } from 'react-arborist';
 import type { NodeApi, TreeApi } from 'react-arborist';
 import { getTree } from '@/services/fileservice';
@@ -36,6 +36,10 @@ interface TreeViewProps {
   onRemoveFile?: (path: string) => void;
   onOpenCreatePage: (path: string) => void;
   isAuthenticated: boolean;
+}
+
+export interface TreeViewRef {
+  refreshPath: (folderPath: string) => void;
 }
 
 interface NodeComponentProps {
@@ -278,20 +282,17 @@ const RightElement = ({
   onSelect?: (path: string) => void;
   onOpenCreatePage?: (path: string) => void;
 }) => {
+
   const handleCreateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    // For folders: create file inside
-    // For files: create file in parent directory
+    // create file first
+
     const targetPath = node.data.isDir
       ? node.data.path
       : node.data.path.substring(0, node.data.path.lastIndexOf('/')) || '/';
 
-    if (node.data.isDir && onCreateFolder) {
-      onCreateFolder(targetPath);
-    } else if (onCreateFile) {
-      onCreateFile?.(targetPath);
-    }
+    onOpenCreatePage?.(targetPath);
   };
 
   return (
@@ -317,6 +318,7 @@ const RightElement = ({
             </DropdownTrigger>
             <DropdownMenu aria-label="Static Actions"
             >
+              <DropdownItem key="new_folder" onPress={() => onCreateFolder?.(node.data.path)}>New folder</DropdownItem>
               <DropdownItem key="copy" onPress={() => onCopyLink?.(node.data.path)}>Copy link</DropdownItem>
               <DropdownItem key="rename" onPress={() => onRenameClick?.(node.data.path)}>Rename folder</DropdownItem>
               <DropdownItem key="delete" className="text-danger" color="danger" onPress={() => onRemoveFile?.(node.data.path)}>
@@ -326,7 +328,7 @@ const RightElement = ({
           </Dropdown>
           <button
             className="w-6 h-6 hover:bg-primary/10 rounded-sm p-1 flex items-center justify-center"
-            onClick={() => onOpenCreatePage?.(node.data.path)}
+            onClick={handleCreateClick}
             title="New file or folder"
             aria-label="New file or folder"
           >
@@ -337,7 +339,7 @@ const RightElement = ({
       {/* FILES */}
       {!node.data.isDir && (
         <>
-          <Dropdown 
+          <Dropdown
             classNames={{
               base: "before:bg-default-200", // change arrow background
               content:
@@ -523,7 +525,7 @@ const Node = ({
 // #endregion 
 
 // #region Main Component
-export default function TreeView({
+const TreeView = forwardRef<TreeViewRef, TreeViewProps>(({
   path = '/',
   selectedPath,
   onSelect,
@@ -534,7 +536,7 @@ export default function TreeView({
   onRemoveFile,
   onOpenCreatePage,
   isAuthenticated
-}: TreeViewProps) {
+}, ref) => {
   const treeRef = useRef<TreeApi<TreeNode>>(null);
   const { containerRef, containerHeight } = useContainerHeight([]);
 
@@ -547,6 +549,19 @@ export default function TreeView({
     fetchTree,
     renameNodeInState,
   } = useTreeData(isAuthenticated, path);
+
+  // Expose refreshPath method to parent component
+  useImperativeHandle(ref, () => ({
+    refreshPath: (folderPath: string) => {
+      // If it's root path, refresh root
+      if (folderPath === '/' || folderPath === path) {
+        fetchTree(path, true);
+      } else {
+        // Refresh the specific folder
+        fetchTree(folderPath, false);
+      }
+    }
+  }), [fetchTree, path]);
 
 
   // Build tree structure
@@ -724,5 +739,9 @@ export default function TreeView({
       )}
     </div>
   );
-}
+});
+
+TreeView.displayName = 'TreeView';
+
+export default TreeView;
 // #endregion 

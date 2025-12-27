@@ -3,16 +3,20 @@
 import { LeftSideBarTop } from "@/components/Bar/LeftSideBarTop";
 import { CommandMenu } from "@/components/CommandMenu";
 import CreatePageModal from "@/components/Modal/CreatePageModal";
+import CreateFolderModal from "@/components/Modal/CreateFolderModal";
 import TreeView from "@/components/TreeView";
 import { useAppSettings } from "@/contexts/AppContext";
 import { CreatePageProvider, useCreatePage } from "@/contexts/CreatePageContext";
 import { usePlatform } from "@/contexts/PlatformContext";
-import { renameFile } from "@/services/fileservice";
+import { renameFile, createFile, removeFile, createFolder } from "@/services/fileservice";
 import { buildRenamedPath } from "@/utils/stringhelper";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSidebar } from "@/hook/useSidebar";
 import { twMerge } from "tailwind-merge";
+import { useState, useRef } from "react";
+import { addToast, cn } from "@heroui/react";
+import { TreeViewRef } from "@/components/TreeView";
 
 function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -20,6 +24,10 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const { isMobile, isWebView } = usePlatform();
   const { setAccessToken, editMode } = useAppSettings();
   const { setIsOpen, isOpen } = useCreatePage();
+  const [createPagePath, setCreatePagePath] = useState<string>("");
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState<boolean>(false);
+  const [createFolderPath, setCreateFolderPath] = useState<string>("");
+  const treeViewRef = useRef<TreeViewRef>(null);
 
   // Sidebar configuration - width is configurable (default: 256px)
   const SIDEBAR_WIDTH = 256;
@@ -80,25 +88,198 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleRemoveFile = async (path: string) => {
+    try {
+      await removeFile(path);
+
+      // Get parent path to refresh tree view
+      const parentPath = path.substring(0, path.lastIndexOf('/')) || '/';
+      if (treeViewRef.current) {
+        treeViewRef.current.refreshPath(parentPath);
+      }
+
+      // If we are currently viewing this file/folder, navigate to parent or root
+      if (selectedPath === path || selectedPath.startsWith(path + '/')) {
+        if (parentPath === '/') {
+          router.push('/notes');
+        } else {
+          if (editMode) {
+            router.push(`/notes/edit/${parentPath}`);
+          } else {
+            router.push(`/notes/${parentPath}`);
+          }
+        }
+      }
+
+      addToast({
+        title: "File deleted successfully",
+        description: "The file has been deleted successfully",
+        color: "success",
+        hideIcon: false,
+        timeout: 2000,
+        classNames: {
+          base: cn([
+            "bg-background/50 text-foreground",
+            "backdrop-blur-sm",
+          ]),
+          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+        },
+      });
+    } catch (err) {
+      console.error("Failed to delete file", err);
+      addToast({
+        title: "Failed to delete file",
+        description: err instanceof Error ? err.message : "An error occurred while deleting the file",
+        color: "danger",
+        hideIcon: false,
+        timeout: 3000,
+        classNames: {
+          base: cn([
+            "bg-background/50 text-foreground",
+            "backdrop-blur-sm",
+          ]),
+          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+        },
+      });
+    }
+  };
+
+  // set path 
   const handleOpenCreatePage = (path: string) => {
     console.log("open create page", path);
+    setCreatePagePath(path);
     setIsOpen(true);
+  };
+
+  // Open create folder modal
+  const handleOpenCreateFolder = (path: string) => {
+    console.log("open create folder", path);
+    setCreateFolderPath(path);
+    setIsFolderModalOpen(true);
+  };
+
+  // Save folder
+  const handleSaveFolder = async (folderName: string) => {
+    try {
+      const basePath = createFolderPath.endsWith('/') ? createFolderPath : createFolderPath + '/';
+      const fullPath = basePath + folderName.trim();
+      await createFolder(fullPath);
+
+      // Refresh the tree view to show the new folder
+      if (treeViewRef.current) {
+        const folderPathToRefresh = createFolderPath || '/';
+        treeViewRef.current.refreshPath(folderPathToRefresh);
+      }
+
+      addToast({
+        title: "Folder created successfully",
+        description: "The folder has been created successfully",
+        color: "success",
+        hideIcon: false,
+        timeout: 2000,
+        classNames: {
+          base: cn([
+            "bg-background/50 text-foreground",
+            "backdrop-blur-sm",
+          ]),
+          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+        },
+      });
+
+      setIsFolderModalOpen(false);
+      setCreateFolderPath("");
+    } catch (err) {
+      console.error("Failed to create folder", err);
+      addToast({
+        title: "Failed to create folder",
+        description: err instanceof Error ? err.message : "An error occurred while creating the folder",
+        color: "danger",
+        hideIcon: false,
+        timeout: 3000,
+        classNames: {
+          base: cn([
+            "bg-background/50 text-foreground",
+            "backdrop-blur-sm",
+          ]),
+          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+        },
+      });
+    }
+  };
+
+  // Close folder modal without saving
+  const handleCloseFolderModal = () => {
+    setIsFolderModalOpen(false);
+    setCreateFolderPath("");
+  };
+
+  // close modal without saving
+  const handleCloseWithoutSave = () => {
+    console.log("close modal without save", createPagePath);
+    setIsOpen(false);
+    setCreatePagePath("");
+  };
+
+  // save and close modal (called when clicking outside or Save button)
+  const handleSaveAndClose = async (fileName: string, content: string) => {
+    console.log("save and close modal", createPagePath, fileName);
+
+    if (createPagePath && fileName) {
+      try {
+        // Construct full path: basePath/fileName.md
+        const basePath = createPagePath.endsWith('/') ? createPagePath : createPagePath + '/';
+        const fullPath = basePath + fileName;
+        const response = await createFile(fullPath, content);
+
+        // Refresh the tree view to show the new file
+        if (treeViewRef.current) {
+          // Refresh the parent folder where the file was created
+          const folderPathToRefresh = createPagePath || '/';
+          treeViewRef.current.refreshPath(folderPathToRefresh);
+        }
+
+        // Optionally navigate to the new file
+        if (editMode) {
+          router.push(`/notes/edit/${response.path}`);
+        } else {
+          router.push(`/notes/${response.path}`);
+        }
+        addToast({
+          title: "File created successfully",
+          description: "The file has been created successfully",
+          color: "success",
+          hideIcon: false,
+          timeout: 2000,
+          classNames: {
+            base: cn([
+              "bg-background/50 text-foreground",
+              "backdrop-blur-sm",
+            ]),
+            closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
+          },
+        });
+      } catch (err) {
+        console.error("Failed to create file", err);
+      }
+    }
+    setIsOpen(false);
+    setCreatePagePath("");
   };
 
   // Desktop: show sidebar and content with animation
   return (
     <div className={twMerge("flex h-screen bg-background text-foreground relative",
-     isCollapsed ? "flex-row" : "flex-col")}>
+      isCollapsed ? "flex-row" : "flex-col")}>
       <CommandMenu />
-      
+
       {/* Left Sidebar - Animated with Framer Motion, remains mounted when collapsed */}
       {/* Animation: Uses translateX to slide in/out, not width changes */}
       <motion.div
         ref={sidebarRef}
         className={twMerge(
           "bg-background flex flex-col fixed left-0 z-40",
-          isCollapsed 
-            ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2" 
+          isCollapsed
+            ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
             : "top-0 bottom-0"
         )}
         style={{ width: SIDEBAR_WIDTH }}
@@ -108,15 +289,16 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <LeftSideBarTop 
-          handleLogout={handleLogout} 
-          isMobile={false} 
+        <LeftSideBarTop
+          handleLogout={handleLogout}
+          isMobile={false}
           onToggleSidebar={toggleSidebar}
           isCollapsed={isCollapsed}
         />
 
         <div className="flex-1 overflow-y-auto ">
           <TreeView
+            ref={treeViewRef}
             path="/"
             selectedPath={selectedPath || undefined}
             onSelect={(path) => {
@@ -129,14 +311,26 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
             onCopyLink={(path) => {
               console.log("copy link", path);
             }}
-            onRemoveFile={(path) => {
-              console.log("remove file", path);
-            }}
+            onRemoveFile={handleRemoveFile}
             onRename={handleRename}
             onOpenCreatePage={handleOpenCreatePage}
+            onCreateFolder={handleOpenCreateFolder}
             isAuthenticated={true}
           />
-          <CreatePageModal isOpen={isOpen} onOpen={() => { }} onClose={() => { }} />
+
+          <CreatePageModal
+            isOpen={isOpen}
+            path={createPagePath}
+            onSave={handleSaveAndClose}
+            onCloseWithoutSave={handleCloseWithoutSave}
+          />
+
+          <CreateFolderModal
+            isOpen={isFolderModalOpen}
+            path={createFolderPath}
+            onSave={handleSaveFolder}
+            onCloseWithoutSave={handleCloseFolderModal}
+          />
         </div>
       </motion.div>
 

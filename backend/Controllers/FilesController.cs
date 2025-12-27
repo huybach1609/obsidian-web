@@ -164,6 +164,34 @@ namespace backend.Controllers
             return Ok(new { ok = true });
         }
 
+        // POST /api/file
+        [HttpPost("file")]
+        public async Task<IActionResult> PostFile([FromBody] FileWrite req)
+        {
+            var full = SafePath(req.Path);
+
+            // Ensure the file has .md extension
+            if (!full.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            {
+                full += ".md";
+            }
+
+            // Check if file already exists
+            if (System.IO.File.Exists(full))
+            {
+                return Conflict(new { error = "File already exists" });
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+
+            // atomic write using temp file then move
+            var tmp = full + ".tmp";
+            await System.IO.File.WriteAllTextAsync(tmp, req.Content ?? string.Empty, Encoding.UTF8);
+            System.IO.File.Move(tmp, full, true);
+
+            return Ok(new { ok = true, path = Path.GetRelativePath(_vaultRoot, full).Replace("\\", "/") });
+        }
+
         // POST /api/file/rename
         /// <summary>
         /// Rename a file or folder
