@@ -15,8 +15,9 @@ import { motion } from "framer-motion";
 import { useSidebar } from "@/hook/useSidebar";
 import { twMerge } from "tailwind-merge";
 import { useState, useRef } from "react";
-import { addToast, cn } from "@heroui/react";
+import { addToast, Button, cn } from "@heroui/react";
 import { TreeViewRef } from "@/components/TreeView";
+import { ArrowDownNarrowWideIcon, ArrowUpNarrowWideIcon, ChevronsDownUp, FilePlusCornerIcon, FolderPlusIcon } from "lucide-react";
 
 function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -296,7 +297,12 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
           isCollapsed={isCollapsed}
         />
 
-        <div className="flex-1 overflow-y-auto ">
+        <TreeActions 
+          onCreateFile={() => handleOpenCreatePage("/")}
+          onCreateFolder={() => handleOpenCreateFolder("/")}
+        />
+
+        <div className="flex-1 min-h-0">
           <TreeView
             ref={treeViewRef}
             path="/"
@@ -360,3 +366,42 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
   );
 }
 
+interface TreeActionsProps {
+  onCreateFile: () => void;
+  onCreateFolder: () => void;
+}
+
+const TreeActions = ({ onCreateFile, onCreateFolder }: TreeActionsProps) => {
+  const btnstyle = "h-5 w-5 text-foreground";
+  return (
+    <div className="flex items-center gap-2 pt-2 w-full justify-center">
+      <Button 
+        id="create-file" 
+        variant="light" 
+        isIconOnly 
+        size="sm"
+        onPress={onCreateFile}
+      >
+        <FilePlusCornerIcon className={btnstyle} />
+      </Button>
+
+      <Button 
+        id="create-folder" 
+        variant="light" 
+        isIconOnly  
+        size="sm"
+        onPress={onCreateFolder}
+      >
+        <FolderPlusIcon className={btnstyle} />
+      </Button>
+
+      <Button id="sort" variant="light" isIconOnly  size="sm" >
+        <ArrowUpNarrowWideIcon className={btnstyle} />
+      </Button>
+
+      <Button id="collapse" variant="light" isIconOnly size="sm">
+        <ChevronsDownUp  className={btnstyle} />
+      </Button>
+    </div>
+  )
+}

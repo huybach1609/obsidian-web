@@ -28,7 +28,9 @@ const config = {
           layout: {}, // light theme layout tokens
           colors: {
             background: "#ede0d4",
+            background1: "#f5f5f5",
             foreground: "#03071e",
+            foreground1: "#333333",
             primary: "#d32f2f",
             secondary: "#ff7043",
             warning: "#ff9800",
@@ -44,7 +46,9 @@ const config = {
           layout: {}, // dark theme layout tokens
           colors: {
             background: "#1e1e1e",
+            background1: "#080807",
             foreground: "#f8f8f2",
+            foreground1: "#cccccc",
             primary: "#ff6961",
             secondary: "#ffa07a",
             warning: "#ffb74d",

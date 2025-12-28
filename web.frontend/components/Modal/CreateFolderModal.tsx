@@ -1,8 +1,8 @@
 'use client';
 
-import { Button, Modal, ModalContent, ModalBody, Input, Breadcrumbs, BreadcrumbItem } from "@heroui/react";
+import { Button, Modal, ModalContent, ModalBody, Input, Breadcrumbs, BreadcrumbItem, Divider } from "@heroui/react";
 import { useState, useEffect, useCallback } from "react";
-import { Save, X } from "lucide-react";
+import { FolderPlusIcon, Save, X } from "lucide-react";
 
 interface CreateFolderModalProps {
     isOpen: boolean;
@@ -68,33 +68,8 @@ export default function CreateFolderModal({ isOpen, path, onSave, onCloseWithout
                     {(onCloseModal) => (
                         <>
                             <ModalBody className="p-0 gap-0">
-                                <div className="w-full relative flex justify-center items-center py-1 pt-2">
-                                    <Breadcrumbs className="">
-                                        {parentsItem.map((item: string, idx: number) => (
-                                            <BreadcrumbItem key={idx}>
-                                                {item}
-                                            </BreadcrumbItem>
-                                        ))}
-                                    </Breadcrumbs>
-
-                                    <div className="absolute right-0 flex gap-2">
-                                        <Button
-                                            variant="light"
-                                            onPress={handleSaveClick}
-                                            isDisabled={!folderName.trim() || !!folderNameError}
-                                            isIconOnly
-                                        >
-                                            <Save className="h-4 w-4" />
-                                        </Button>
-
-                                        <Button variant="light" onPress={handleCloseClick} isIconOnly>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-
-                                </div>
                                 {/* Folder name input - highlighted */}
-                                <div className="px-6 pb-6 ">
+                                <div className="relative">
                                     <Input
                                         placeholder="Untitled"
                                         aria-label="Folder name"
@@ -109,13 +84,33 @@ export default function CreateFolderModal({ isOpen, path, onSave, onCloseWithout
                                                 handleSaveClick();
                                             }
                                         }}
+                                        label={path}
+                                        size="lg"
                                         classNames={{
+
                                             input: "text-lg font-semibold text-foreground",
                                             inputWrapper: folderNameError
                                                 ? "bg-danger-100 dark:bg-danger-900/20"
                                                 : "bg-warning-200 dark:bg-warning-900/30 hover:bg-warning-300 dark:hover:bg-warning-900/40",
                                             base: "w-full",
+                                            mainWrapper: "relative",
                                         }}
+                                        endContent={
+                                            <>
+                                                <Button
+                                                    variant="light"
+                                                    onPress={handleSaveClick}
+                                                    isDisabled={!folderName.trim() || !!folderNameError}
+                                                    isIconOnly
+                                                >
+                                                    <Save className="h-4 w-4" />
+                                                </Button>
+
+                                                <Button variant="light" onPress={handleCloseClick} isIconOnly>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        }
                                     />
                                 </div>
                             </ModalBody>
@@ -126,4 +121,5 @@ export default function CreateFolderModal({ isOpen, path, onSave, onCloseWithout
         </>
     );
 }
+
 
