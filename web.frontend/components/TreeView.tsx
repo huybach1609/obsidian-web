@@ -5,9 +5,8 @@ import { Tree } from 'react-arborist';
 import type { NodeApi, TreeApi } from 'react-arborist';
 import { getTree } from '@/services/fileservice';
 import { buildRenamedPath, extractFileName, getParentPaths, sortByTypeAndName } from '@/utils/stringhelper';
-import { ChevronDownIcon, ChevronRightIcon, Ellipsis, EllipsisVerticalIcon, FileIcon, FolderIcon, Plus, TrashIcon } from 'lucide-react';
-import { Button, ButtonGroup, DropdownTrigger, DropdownMenu, Dropdown, Spinner, DropdownItem, PopoverTrigger, Popover, PopoverContent, Input } from '@heroui/react';
-import { useCreatePage } from '@/contexts/CreatePageContext';
+import { ChevronDownIcon, ChevronRightIcon, Ellipsis, FileIcon, FolderIcon, Plus } from 'lucide-react';
+import {  DropdownTrigger, DropdownMenu, Dropdown, Spinner, DropdownItem } from '@heroui/react';
 
 // region Type Definitions
 interface TreeItem {
@@ -64,7 +63,14 @@ const useContainerHeight = (dependencies: any[]) => {
     if (typeof window === 'undefined') return;
 
     const calculateHeight = () => {
-      setContainerHeight(window.innerHeight - 100);
+      // Calculate height based on the container's actual available space
+      if (containerRef.current) {
+        const height = containerRef.current.clientHeight;
+        setContainerHeight(height);
+      } else {
+        // Fallback to window height if container not available yet
+        setContainerHeight(window.innerHeight - 100);
+      }
     };
 
     const updateHeight = () => {
@@ -708,7 +714,7 @@ const TreeView = forwardRef<TreeViewRef, TreeViewProps>(({
       )}
 
       {treeData.length > 0 && (
-        <div ref={containerRef} className="flex-1 min-h-0" style={{ height: '100%' }}>
+        <div ref={containerRef} className="flex-1 min-h-0">
           <Tree
             ref={treeRef}
             data={treeData}

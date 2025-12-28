@@ -100,12 +100,12 @@ export default function CreatePageModal({ isOpen, path, onSave, onCloseWithoutSa
     }, [setContent, setHasChanges]);
 
 
-    const handleSaveClick = () => {
+    const handleSaveClick = useCallback(() => {
         if (!validateFileName(fileName)) {
             return;
         }
         onSave(fileName, content);
-    };
+    }, [fileName, content, validateFileName, onSave]);
 
     const handleCloseClick = () => {
         setFileName("");
@@ -114,6 +114,23 @@ export default function CreatePageModal({ isOpen, path, onSave, onCloseWithoutSa
         setHasChanges(false);
         onCloseWithoutSave();
     };
+
+    // Global keyboard shortcut handler for Ctrl+S / Cmd+S
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                handleSaveClick();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen, handleSaveClick]);
 
 
     var parentsItem: string[] = path.split('/');
