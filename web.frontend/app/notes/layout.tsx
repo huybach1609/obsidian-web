@@ -14,10 +14,11 @@ import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSidebar } from "@/hook/useSidebar";
 import { twMerge } from "tailwind-merge";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { addToast, Button, cn } from "@heroui/react";
 import { TreeViewRef } from "@/components/TreeView";
-import { ArrowDownNarrowWideIcon, ArrowUpNarrowWideIcon, ChevronsDownUp, FilePlusCornerIcon, FolderPlusIcon } from "lucide-react";
+import { ArrowDownNarrowWideIcon, ArrowUpNarrowWideIcon, ChevronsDownUp, ChevronsUpDown, FilePlusCornerIcon, FolderPlusIcon } from "lucide-react";
+import { siteConfig } from "@/config/site";
 
 function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -31,7 +32,33 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const treeViewRef = useRef<TreeViewRef>(null);
 
   // Sidebar configuration - width is configurable (default: 256px)
-  const SIDEBAR_WIDTH = 256;
+  // Initialize with default to avoid hydration mismatch
+  const [sidebarWidth, setSidebarWidth] = useState<number>(256);
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Load from localStorage after hydration (client-side only)
+  useEffect(() => {
+    setIsHydrated(true);
+    const saved = localStorage.getItem('sidebar-width');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 200 && parsed <= 600) {
+        setSidebarWidth(parsed);
+      }
+    }
+  }, []);
+  
+  // Save to localStorage when width changes (only after hydration)
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem('sidebar-width', sidebarWidth.toString());
+    }
+  }, [sidebarWidth, isHydrated]);
+
+  // Resize handle state
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(0);
 
   // Extract the current path from route params (same logic as in page.tsx)
   const selectedPath = decodeURIComponent(
@@ -55,8 +82,44 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     handleMouseLeave,
     toggle: toggleSidebar,
   } = useSidebar(isMobile, isWebView, {
-    sidebarWidth: SIDEBAR_WIDTH,
+    sidebarWidth: sidebarWidth,
   });
+
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = sidebarWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const diff = e.clientX - resizeStartX.current;
+    const newWidth = Math.max(200, Math.min(600, resizeStartWidth.current + diff));
+    setSidebarWidth(newWidth);
+  }, [isResizing]);
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  // Add global mouse event listeners for resizing
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
 
   // Mobile: Hide sidebar, show only content
   if (isMobile || isWebView) {
@@ -283,7 +346,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
             ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
             : "top-0 bottom-0"
         )}
-        style={{ width: SIDEBAR_WIDTH }}
+        style={{ width: sidebarWidth }}
         variants={sidebarVariants}
         animate={isSidebarVisible ? 'expanded' : 'collapsed'}
         initial={false}
@@ -300,6 +363,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         <TreeActions 
           onCreateFile={() => handleOpenCreatePage("/")}
           onCreateFolder={() => handleOpenCreateFolder("/")}
+          treeViewRef={treeViewRef}
         />
 
         <div className="flex-1 min-h-0">
@@ -338,13 +402,24 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
             onCloseWithoutSave={handleCloseFolderModal}
           />
         </div>
+
+        {/* Resize Handle */}
+        {!isCollapsed && (
+          <div
+            className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-primary/30 transition-all z-50 group"
+            onMouseDown={handleResizeStart}
+            style={{ touchAction: 'none' }}
+          >
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        )}
       </motion.div>
 
       {/* Main Content Area - Smoothly adjusts based on sidebar state */}
       <motion.div
         className="flex-1 min-w-0"
         style={{
-          marginLeft: isSidebarVisible ? SIDEBAR_WIDTH : 0,
+          marginLeft: isSidebarVisible ? sidebarWidth : 0,
         }}
         transition={{
           type: 'spring',
@@ -369,10 +444,43 @@ export default function NotesLayout({ children }: { children: React.ReactNode })
 interface TreeActionsProps {
   onCreateFile: () => void;
   onCreateFolder: () => void;
+  treeViewRef: React.RefObject<TreeViewRef>;
 }
 
-const TreeActions = ({ onCreateFile, onCreateFolder }: TreeActionsProps) => {
+const TreeActions = ({ onCreateFile, onCreateFolder, treeViewRef }: TreeActionsProps) => {
   const btnstyle = "h-5 w-5 text-foreground";
+  const [hasOpenFolders, setHasOpenFolders] = useState(false);
+
+  // Check if any folders are open
+  const checkOpenFolders = () => {
+    if (treeViewRef.current) {
+      const hasOpen = treeViewRef.current.hasOpenFolders();
+      setHasOpenFolders(hasOpen);
+    }
+  };
+
+  // Check on mount and periodically
+  useEffect(() => {
+    checkOpenFolders();
+    const interval = setInterval(checkOpenFolders, 500); // Check every 500ms
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleToggleExpandCollapse = async () => {
+    if (!treeViewRef.current) return;
+
+    if (hasOpenFolders) {
+      // Collapse all folders
+      treeViewRef.current.collapseAll();
+    } else {
+      // Expand to 2 levels (expand 2 child folders)
+      treeViewRef.current.expandToLevel(siteConfig.expandLevel || 2);
+    }
+    
+    // Check after toggle operation completes
+    setTimeout(checkOpenFolders, 200);
+  };
+
   return (
     <div className="flex items-center gap-2 pt-2 w-full justify-center">
       <Button 
@@ -399,8 +507,19 @@ const TreeActions = ({ onCreateFile, onCreateFolder }: TreeActionsProps) => {
         <ArrowUpNarrowWideIcon className={btnstyle} />
       </Button>
 
-      <Button id="collapse" variant="light" isIconOnly size="sm">
-        <ChevronsDownUp  className={btnstyle} />
+      <Button 
+        id="collapse" 
+        variant="light" 
+        isIconOnly 
+        size="sm"
+        onPress={handleToggleExpandCollapse}
+        title={hasOpenFolders ? "Collapse all folders" : "Expand folders (2 levels)"}
+      >
+        {hasOpenFolders ? (
+          <ChevronsDownUp className={btnstyle} />
+        ) : (
+          <ChevronsUpDown className={btnstyle} />
+        )}
       </Button>
     </div>
   )

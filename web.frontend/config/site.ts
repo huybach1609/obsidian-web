@@ -3,6 +3,7 @@ export type SiteConfig = typeof siteConfig;
 export const siteConfig = {
   name: "Obsidian Webs",
   description: "Obsidian Web Client",
+  expandLevel: 2,
   navItems: [
     {
       label: "Home",

@@ -239,6 +239,98 @@ namespace backend.Controllers
             }
         }
 
+        // POST /api/file/move
+        /// <summary>
+        /// Move a file or folder to a new location (for drag-and-drop in tree view)
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        [HttpPost("file/move")]
+        public IActionResult MoveFileOrFolder([FromBody] MoveRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.SourcePath))
+            {
+                return BadRequest(new { error = "SourcePath is required" });
+            }
+
+            if (string.IsNullOrWhiteSpace(req.DestinationParentPath))
+            {
+                return BadRequest(new { error = "DestinationParentPath is required" });
+            }
+
+            var sourceFull = SafePath(req.SourcePath);
+            var destinationParentFull = SafePath(req.DestinationParentPath);
+
+            // Validate source exists
+            if (!System.IO.File.Exists(sourceFull) && !Directory.Exists(sourceFull))
+            {
+                return NotFound(new { error = "Source file or folder not found" });
+            }
+
+            // Validate destination parent is a directory
+            if (!Directory.Exists(destinationParentFull))
+            {
+                return BadRequest(new { error = "Destination parent path must be a directory" });
+            }
+
+            // Prevent moving a folder into itself or its children
+            if (Directory.Exists(sourceFull))
+            {
+                var sourceNormalized = Path.GetFullPath(sourceFull).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var destNormalized = Path.GetFullPath(destinationParentFull).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                
+                if (destNormalized.StartsWith(sourceNormalized + Path.DirectorySeparatorChar) || 
+                    destNormalized.StartsWith(sourceNormalized + Path.AltDirectorySeparatorChar) ||
+                    destNormalized == sourceNormalized)
+                {
+                    return BadRequest(new { error = "Cannot move a folder into itself or its subdirectories" });
+                }
+            }
+
+            try
+            {
+                var sourceName = Path.GetFileName(sourceFull);
+                var destinationName = string.IsNullOrWhiteSpace(req.NewName) ? sourceName : req.NewName;
+                var destinationFull = Path.Combine(destinationParentFull, destinationName);
+
+                // Check for duplicate name in destination
+                if (System.IO.File.Exists(destinationFull) || Directory.Exists(destinationFull))
+                {
+                    // If source and destination are the same, it's not a move, just return success
+                    if (Path.GetFullPath(sourceFull).Equals(Path.GetFullPath(destinationFull), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Ok(new { ok = true, sourcePath = req.SourcePath, destinationPath = Path.GetRelativePath(_vaultRoot, destinationFull).Replace("\\", "/") });
+                    }
+
+                    return Conflict(new { error = $"A file or folder with the name '{destinationName}' already exists in the destination" });
+                }
+
+                // Ensure destination directory exists
+                Directory.CreateDirectory(destinationParentFull);
+
+                // Perform the move
+                if (Directory.Exists(sourceFull))
+                {
+                    Directory.Move(sourceFull, destinationFull);
+                }
+                else
+                {
+                    System.IO.File.Move(sourceFull, destinationFull);
+                }
+
+                var relativeDestinationPath = Path.GetRelativePath(_vaultRoot, destinationFull).Replace("\\", "/");
+                return Ok(new { ok = true, sourcePath = req.SourcePath, destinationPath = relativeDestinationPath });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { error = $"Access denied: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Failed to move: {ex.Message}" });
+            }
+        }
+
         // POST /api/folder
         [HttpPost("folder")]
         public IActionResult CreateFolder([FromBody] FolderCreate req)
@@ -382,6 +474,12 @@ namespace backend.Controllers
     {
         public string OldPath { get; set; }
         public string NewPath { get; set; }
+    }
+    public class MoveRequest
+    {
+        public string SourcePath { get; set; }
+        public string DestinationParentPath { get; set; }
+        public string? NewName { get; set; }
     }
     public class TreeEntry
     {

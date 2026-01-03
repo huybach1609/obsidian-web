@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 export interface UseSidebarOptions {
   /** Sidebar width in pixels (default: 256) */
@@ -171,7 +171,8 @@ export const useSidebar = (
   }, [enabled, isHoverRevealed, isCollapsed]);
 
   // Framer Motion variants for sidebar animation using translateX
-  const sidebarVariants = {
+  // Recalculate when sidebarWidth changes
+  const sidebarVariants = useMemo(() => ({
     expanded: {
       x: 0,
       transition: {
@@ -188,7 +189,7 @@ export const useSidebar = (
         damping: 30,
       },
     },
-  };
+  }), [sidebarWidth]);
 
   // Determine if sidebar should be visible (expanded OR hover-revealed)
   const isSidebarVisible = !isCollapsed || isHoverRevealed;

@@ -56,7 +56,7 @@ export async function copyLink(path: string): Promise<string> {
   // Generate the full URL for the file/folder
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const link = `${baseUrl}/notes/edit${path}`;
-  
+
   // Copy to clipboard if available
   if (typeof window !== 'undefined' && navigator.clipboard) {
     try {
@@ -67,7 +67,24 @@ export async function copyLink(path: string): Promise<string> {
       return link;
     }
   }
-  
+
   return link;
+}
+
+export interface MoveRequest {
+  sourcePath: string;
+  destinationParentPath: string;
+  newName: string;
+}
+
+
+
+export async function moveFile(moveRequest: MoveRequest) {
+  console.log(moveRequest);
+  const { data } = await axios.post
+    ('/file/move',
+      moveRequest
+    );
+  return data;
 }
 
