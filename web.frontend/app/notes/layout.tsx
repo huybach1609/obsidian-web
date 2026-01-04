@@ -133,6 +133,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
 
+
   const handleRename = async (oldPath: string, newName: string) => {
     const newPath = buildRenamedPath(oldPath, newName);
 
