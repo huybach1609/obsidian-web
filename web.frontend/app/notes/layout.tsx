@@ -35,9 +35,13 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   // Initialize with default to avoid hydration mismatch
   const [sidebarWidth, setSidebarWidth] = useState<number>(256);
   const [isHydrated, setIsHydrated] = useState(false);
-  
+
+  const { accessToken } = useAppSettings();
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
+    if (!accessToken) {
+      router.push('/login');
+    }
     setIsHydrated(true);
     const saved = localStorage.getItem('sidebar-width');
     if (saved) {
@@ -47,7 +51,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
       }
     }
   }, []);
-  
+
   // Save to localStorage when width changes (only after hydration)
   useEffect(() => {
     if (isHydrated) {
@@ -97,7 +101,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
 
   const handleResizeMove = useCallback((e: MouseEvent) => {
     if (!isResizing) return;
-    
+
     const diff = e.clientX - resizeStartX.current;
     const newWidth = Math.max(200, Math.min(600, resizeStartWidth.current + diff));
     setSidebarWidth(newWidth);
@@ -361,7 +365,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
           isCollapsed={isCollapsed}
         />
 
-        <TreeActions 
+        <TreeActions
           onCreateFile={() => handleOpenCreatePage("/")}
           onCreateFolder={() => handleOpenCreateFolder("/")}
           treeViewRef={treeViewRef}
@@ -477,41 +481,41 @@ const TreeActions = ({ onCreateFile, onCreateFolder, treeViewRef }: TreeActionsP
       // Expand to 2 levels (expand 2 child folders)
       treeViewRef.current.expandToLevel(siteConfig.expandLevel || 2);
     }
-    
+
     // Check after toggle operation completes
     setTimeout(checkOpenFolders, 200);
   };
 
   return (
     <div className="flex items-center gap-2 pt-2 w-full justify-center">
-      <Button 
-        id="create-file" 
-        variant="light" 
-        isIconOnly 
+      <Button
+        id="create-file"
+        variant="light"
+        isIconOnly
         size="sm"
         onPress={onCreateFile}
       >
         <FilePlusCornerIcon className={btnstyle} />
       </Button>
 
-      <Button 
-        id="create-folder" 
-        variant="light" 
-        isIconOnly  
+      <Button
+        id="create-folder"
+        variant="light"
+        isIconOnly
         size="sm"
         onPress={onCreateFolder}
       >
         <FolderPlusIcon className={btnstyle} />
       </Button>
 
-      <Button id="sort" variant="light" isIconOnly  size="sm" >
+      <Button id="sort" variant="light" isIconOnly size="sm" >
         <ArrowUpNarrowWideIcon className={btnstyle} />
       </Button>
 
-      <Button 
-        id="collapse" 
-        variant="light" 
-        isIconOnly 
+      <Button
+        id="collapse"
+        variant="light"
+        isIconOnly
         size="sm"
         onPress={handleToggleExpandCollapse}
         title={hasOpenFolders ? "Collapse all folders" : "Expand folders (2 levels)"}

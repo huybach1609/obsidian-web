@@ -3,6 +3,7 @@ import { EyeIcon } from '@heroicons/react/24/outline';
 import { AlarmClockOff } from 'lucide-react';
 
 export default function NotesPage() {
+
   return (
     <div className="flex flex-col items-center justify-center h-full bg-background text-foreground">
       <AlarmClockOff className="h-16 w-16 text-foreground/60 mb-4" />
