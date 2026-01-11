@@ -8,7 +8,7 @@
   /* Font families are set via Next.js localFont in fonts.ts */
   /* They create CSS variables: --font-sans and --font-mono */
   
-  --markdown-bg: #ede0d4;
+  --markdown-bg: #fcfcf7;
   --markdown-text: #03071e;
   --markdown-h1: #d32f2f;
   --markdown-h2: #ff7043;

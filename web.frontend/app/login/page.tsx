@@ -8,6 +8,7 @@ import { Button, Input, ModalBody, Modal, ModalContent, ModalHeader } from '@her
 import { useAppSettings, getTokenFromCookie } from '@/contexts/AppContext';
 import { LockIcon, MailIcon } from 'lucide-react';
 import { ModalFooter } from '@heroui/react';
+import { siteConfig } from '@/config/site';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,6 +50,7 @@ export default function LoginPage() {
     }
   }
 
+  const { name } = siteConfig;
   return (
     <div className="">
       <img src="/bg_login.webp" alt="Logo" className="h-[100vh] w-full object-cover" />
@@ -56,7 +58,10 @@ export default function LoginPage() {
         <ModalContent>
           {(onClose) => (
             <form onSubmit={handleSubmit}>
-              <ModalHeader className="flex flex-col gap-1">Log in</ModalHeader>
+              <ModalHeader className="flex gap-1 items-center"> 
+                <img src="/favicon.ico" alt="Logo" className="h-10 w-10" />
+                <h2 className="text-2xl font-bold">{name}</h2>
+              </ModalHeader>
               <ModalBody>
                 <Input
                   endContent={

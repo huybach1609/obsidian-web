@@ -27,7 +27,7 @@ const config = {
         light: {
           layout: {}, // light theme layout tokens
           colors: {
-            background: "#ede0d4",
+            background: "#fcfcf7",
             background1: "#f5f5f5",
             foreground: "#03071e",
             foreground1: "#333333",

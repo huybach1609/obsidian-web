@@ -36,12 +36,8 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarWidth, setSidebarWidth] = useState<number>(256);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  const { accessToken } = useAppSettings();
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
-    if (!accessToken) {
-      router.push('/login');
-    }
     setIsHydrated(true);
     const saved = localStorage.getItem('sidebar-width');
     if (saved) {
