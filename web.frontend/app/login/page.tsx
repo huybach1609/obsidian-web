@@ -9,7 +9,7 @@ import { useAppSettings, getTokenFromCookie } from '@/contexts/AppContext';
 import { LockIcon, MailIcon } from 'lucide-react';
 import { ModalFooter } from '@heroui/react';
 import { siteConfig } from '@/config/site';
-// test
+// test 2
 
 export default function LoginPage() {
   const router = useRouter();
