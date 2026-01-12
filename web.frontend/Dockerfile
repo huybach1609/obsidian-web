@@ -12,6 +12,16 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Build-time arguments
+ARG NEXT_PUBLIC_API_PROTOCOL
+ARG NEXT_PUBLIC_API_HOST
+ARG NEXT_PUBLIC_API_PORT
+
+# Expose them to Next.js at build time
+ENV NEXT_PUBLIC_API_PROTOCOL=$NEXT_PUBLIC_API_PROTOCOL
+ENV NEXT_PUBLIC_API_HOST=$NEXT_PUBLIC_API_HOST
+ENV NEXT_PUBLIC_API_PORT=$NEXT_PUBLIC_API_PORT
+
 # Build Next.js application
 RUN npm run build
 
