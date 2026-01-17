@@ -43,6 +43,10 @@ export async function getFilePreview(path: string) {
   return data;
 }
 
+export async function toggleCheckbox(path: string, checkboxText: string) {
+  await axios.post('/file/toggle-checkbox', { path, checkboxText });
+}
+
 export async function removeFile(path: string) {
   await axios.delete('/file', { params: { path } });
 }

@@ -388,11 +388,101 @@ namespace backend.Controllers
                 return NotFound();
 
             var md = System.IO.File.ReadAllText(full);
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            var pipeline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .UseSoftlineBreakAsHardlineBreak()
+                .Build();
             var html = Markdown.ToHtml(md, pipeline);
+            
+            // Remove disabled attribute and add data-interactive to all checkboxes for click handling
+            // Process all input tags to find checkboxes
+            html = System.Text.RegularExpressions.Regex.Replace(
+                html,
+                @"<input([^>]+?)>",
+                (System.Text.RegularExpressions.MatchEvaluator)((match) =>
+                {
+                    var attributes = match.Groups[1].Value;
+                    
+                    // Check if this is a checkbox
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(attributes, @"type\s*=\s*""checkbox""", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                    {
+                        return match.Value; // Not a checkbox, return unchanged
+                    }
+                    
+                    // Remove disabled attribute in all its forms (more aggressive matching)
+                    attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s*disabled\s*=\s*""[^""]*""\s*", " ", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s+disabled\s+", " ", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s+disabled\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"^\s*disabled\s+", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    attributes = attributes.Trim();
+                    
+                    // Normalize spaces
+                    attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s+", " ");
+                    
+                    // Add data-interactive if not present
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(attributes, @"\bdata-interactive\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                    {
+                        attributes = attributes + " data-interactive=\"true\"";
+                    }
+                    
+                    return $"<input {attributes}>";
+                }),
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            
             var wrapped = $"<div class=\"markdown-body\">{html}</div>";
 
             return Content(wrapped, "text/html");
+        }
+
+        // POST /api/file/toggle-checkbox
+        [HttpPost("file/toggle-checkbox")]
+        public async Task<IActionResult> ToggleCheckbox([FromBody] ToggleCheckboxRequest req)
+        {
+            var full = SafePath(req.Path);
+
+            if (!System.IO.File.Exists(full))
+                return NotFound(new { error = "File not found" });
+
+            var md = await System.IO.File.ReadAllTextAsync(full);
+            var lines = md.Split('\n');
+
+            // Find the line with the checkbox
+            bool found = false;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                // Match markdown checkbox patterns: - [ ] or - [x] or * [ ] or * [x]
+                var checkboxPattern = new System.Text.RegularExpressions.Regex(@"^(\s*[-*])\s+\[([ xX])\]\s+(.+)$");
+                var match = checkboxPattern.Match(lines[i]);
+                
+                if (match.Success)
+                {
+                    // Check if the text after checkbox matches (case-insensitive, trimmed)
+                    var checkboxText = match.Groups[3].Value.Trim();
+                    if (checkboxText.Equals(req.CheckboxText?.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                        lines[i].Contains(req.CheckboxText ?? "", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Toggle the checkbox
+                        var marker = match.Groups[1].Value; // - or *
+                        var currentState = match.Groups[2].Value; // x, X, or space
+                        var text = match.Groups[3].Value;
+                        
+                        // Toggle: if checked (x/X), uncheck (space), otherwise check (x)
+                        var newState = (currentState == " " || currentState == "") ? "x" : " ";
+                        lines[i] = $"{marker} [{newState}] {text}";
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!found)
+                return NotFound(new { error = "Checkbox not found" });
+
+            // Write back to file
+            var newContent = string.Join("\n", lines);
+            await System.IO.File.WriteAllTextAsync(full, newContent, Encoding.UTF8);
+
+            return Ok(new { ok = true });
         }
 
         // GET /api/files/search
@@ -405,7 +495,10 @@ namespace backend.Controllers
                 return NotFound();
 
             var md = System.IO.File.ReadAllText(full);
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            var pipeline = new MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .UseSoftlineBreakAsHardlineBreak()
+                .Build();
             var html = Markdown.ToHtml(md, pipeline);
             var wrapped = $"<div class=\"markdown-body\">{html}</div>";
 
@@ -474,6 +567,11 @@ namespace backend.Controllers
     {
         public string OldPath { get; set; }
         public string NewPath { get; set; }
+    }
+    public class ToggleCheckboxRequest
+    {
+        public string Path { get; set; }
+        public string CheckboxText { get; set; }
     }
     public class MoveRequest
     {

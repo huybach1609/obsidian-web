@@ -1,10 +1,10 @@
 "use client";
 import Header from "@/components/Header";
-import { getFilePreview } from "@/services/fileservice";
+import { getFilePreview, toggleCheckbox } from "@/services/fileservice";
 import { Button, ScrollShadow, Spinner } from "@heroui/react";
 import { AlignLeft, EyeIcon, PencilIcon, WrapText } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { siteConfig } from "@/config/site";
 import { decodePathParam } from "@/utils/stringhelper";
 
@@ -20,20 +20,66 @@ export default function NotesPage() {
     const [loading, setLoading] = useState(false);
     const [content, setContent] = useState('');
     const [textWrap, setTextWrap] = useState(true);
+    const previewAreaRef = useRef<HTMLDivElement>(null);
+
+    const loadPreview = useCallback(async () => {
+        if (!filePath) return;
+        setLoading(true);
+        try {
+            const response = await getFilePreview(filePath);
+            setContent(response);
+        } catch (error) {
+            console.error('Error loading file:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [filePath]);
 
     useEffect(() => {
-        // console.log('filePath', filePath);
-        setLoading(true);
-        getFilePreview(filePath ?? '').then(response => {
-            setContent(response);
-            setLoading(false);
-        }).catch(error => {
-            console.error('Error loading file:', error);
-            setLoading(false);
-        }).finally(() => {
-            setLoading(false);
-        });
-    }, [filePath]);
+        loadPreview();
+    }, [loadPreview]);
+
+    // Attach checkbox click handlers after content is rendered
+    useEffect(() => {
+        if (!previewAreaRef.current || !filePath) return;
+
+        const handleCheckboxClick = async (event: MouseEvent) => {
+            const target = event.target as HTMLInputElement;
+            if (target.type === 'checkbox' && target.hasAttribute('data-interactive')) {
+                event.preventDefault();
+                
+                // Find the parent list item and extract text
+                const listItem = target.closest('li');
+                if (!listItem) return;
+
+                // Get text content of the list item, excluding the checkbox
+                const textNode = listItem.cloneNode(true) as HTMLElement;
+                const checkbox = textNode.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.remove();
+                }
+                const checkboxText = textNode.textContent?.trim() || '';
+
+                if (!checkboxText) return;
+
+                // Toggle the checkbox
+                try {
+                    await toggleCheckbox(filePath, checkboxText);
+                    // Reload preview to show updated state
+                    await loadPreview();
+                } catch (error) {
+                    console.error('Error toggling checkbox:', error);
+                }
+            }
+        };
+
+        const previewArea = previewAreaRef.current;
+        previewArea.addEventListener('click', handleCheckboxClick);
+
+        return () => {
+            previewArea.removeEventListener('click', handleCheckboxClick);
+        };
+    }, [content, filePath, loadPreview]);
 
     // Update browser tab title based on fileName
     useEffect(() => {
@@ -95,6 +141,7 @@ export default function NotesPage() {
                 <div className="h-full overflow-y-auto">
                     <div className="h-24 bg-transparent"></div>
                     <div
+                        ref={previewAreaRef}
                         id="preview-area"
                         className={`flex-1  p-4 ${textWrap
                             ? 'break-words whitespace-pre-wrap'

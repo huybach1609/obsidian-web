@@ -94,7 +94,7 @@
 }
 
 #preview-area .markdown-body li {
-  margin: 0.4em 0;
+  margin: 0;
   color: var(--markdown-text);
   line-height: 0.8;
 }
