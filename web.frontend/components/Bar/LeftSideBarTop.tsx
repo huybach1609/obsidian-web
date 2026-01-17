@@ -49,7 +49,7 @@ export const LeftSideBarTop = ({
                   src: "/blank.webp",
                 }}
                 className="transition-transform"
-                description="@admin"
+                description="@admin_123"
                 name="Admin"
               />
             </DropdownTrigger>
