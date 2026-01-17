@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { setAuthToken } from '@/lib/axios';
 import { login, LoginError } from '@/services/authservice';
 import { Button, Input, ModalBody, Modal, ModalContent, ModalHeader } from '@heroui/react';
-import { useAppSettings, getTokenFromCookie } from '@/contexts/AppContext';
+import { useAppSettings, getTokenFromCookie, getLastVisitedPathFromCookie } from '@/contexts/AppContext';
 import { LockIcon, MailIcon } from 'lucide-react';
 import { ModalFooter } from '@heroui/react';
 import { siteConfig } from '@/config/site';
@@ -25,7 +25,9 @@ export default function LoginPage() {
       if (!accessToken && token) {
         setAccessToken(token);
       }
-      router.push('/');
+      const lastPath = getLastVisitedPathFromCookie();
+      const redirectPath = lastPath && lastPath.startsWith('/notes') ? lastPath : '/notes';
+      router.push(redirectPath);
     }
   }, [accessToken, router, setAccessToken]);
 
@@ -38,6 +40,7 @@ export default function LoginPage() {
       const data = await login(username, password);
       setAccessToken(data.token);
       setAuthToken(data.token);
+      // Redirect to last visited path or home (which will handle redirect)
       router.push('/');
     } catch (err) {
       console.error('Login error:', err);

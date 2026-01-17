@@ -21,17 +21,22 @@ type AppContextValue = {
   editMode: boolean;
   vimMode: boolean;
   fileIndex: FileIndexDto[];
+  lastVisitedPath: string | null;
   setThemeMode: (mode: ThemeMode) => void;
   setAccessToken: (token: string | null) => void;
   setEditMode: (mode: boolean) => void;
   setVimMode: (mode: boolean) => void;
+  setLastVisitedPath: (path: string | null) => void;
   clearAppSettings: () => void;
+
+
 };
 
 const THEME_COOKIE_KEY = 'app-theme';
 const EDIT_MODE_COOKIE_KEY = 'app-edit-mode';
 const VIM_MODE_COOKIE_KEY = 'app-vim-mode';
 export const TOKEN_COOKIE_KEY = 'app-token';
+const LAST_VISITED_PATH_COOKIE_KEY = 'app-last-visited-path';
 const COOKIE_MAX_AGE_DAYS = 30;
 
 const defaultValue: AppContextValue = {
@@ -40,11 +45,13 @@ const defaultValue: AppContextValue = {
   editMode: false,
   vimMode: false,
   fileIndex: [],
+  lastVisitedPath: null,
   setThemeMode: () => {},
   setAccessToken: () => {},
   clearAppSettings: () => {},
   setEditMode: () => {},
   setVimMode: () => {},
+  setLastVisitedPath: () => {},
 };
 
 const AppContext = createContext<AppContextValue>(defaultValue);
@@ -57,6 +64,10 @@ export function getTokenFromCookie() {
   return getCookie(TOKEN_COOKIE_KEY);
 }
 
+export function getLastVisitedPathFromCookie() {
+  return getCookie(LAST_VISITED_PATH_COOKIE_KEY);
+}
+
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme, setTheme } = useTheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
@@ -64,6 +75,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [fileIndex, setFileIndexState] = useState<FileIndexDto[]>([]);
   const [editMode, setEditModeState] = useState<boolean>(false);
   const [vimMode, setVimModeState] = useState<boolean>(false);
+  const [lastVisitedPath, setLastVisitedPathState] = useState<string | null>(null);
 
   const initializedRef = useRef(false);
   const syncFromProviderRef = useRef(false);
@@ -96,6 +108,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const cookieVimMode = getCookie(VIM_MODE_COOKIE_KEY);
     if (cookieVimMode != null) {
       setVimModeState(cookieVimMode === 'true');
+    }
+
+    const cookieLastVisitedPath = getCookie(LAST_VISITED_PATH_COOKIE_KEY);
+    if (cookieLastVisitedPath) {
+      setLastVisitedPathState(cookieLastVisitedPath);
     }
   }, [resolvedTheme, setTheme]);
 
@@ -159,6 +176,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setEditModeState(false);
     deleteCookie(VIM_MODE_COOKIE_KEY);
     setVimModeState(false);
+    deleteCookie(LAST_VISITED_PATH_COOKIE_KEY);
+    setLastVisitedPathState(null);
     setTheme('light');
   }, [setTheme]);
 
@@ -172,6 +191,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setCookie(VIM_MODE_COOKIE_KEY, String(mode), COOKIE_MAX_AGE_DAYS);
   }, []);
 
+  const updateLastVisitedPath = useCallback((path: string | null) => {
+    setLastVisitedPathState(path);
+    if (path) {
+      setCookie(LAST_VISITED_PATH_COOKIE_KEY, path, COOKIE_MAX_AGE_DAYS);
+    } else {
+      deleteCookie(LAST_VISITED_PATH_COOKIE_KEY);
+    }
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -180,11 +208,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         editMode,
         vimMode,
         fileIndex,
+        lastVisitedPath,
         setThemeMode: updateThemeMode,
         setAccessToken: updateAccessToken,
         clearAppSettings,
         setEditMode: updateEditMode,
         setVimMode: updateVimMode,
+        setLastVisitedPath: updateLastVisitedPath,
       }}
     >
       {children}

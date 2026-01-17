@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
 import { useFileSearch } from '@/hook/useFileSearch';
 import { useRouter } from 'next/navigation';
+import { useAppSettings } from '@/contexts/AppContext';
 import type { FileIndexDto } from '@/types/FileIndexDto';
 import type { Selection } from "@react-types/shared";
 import { SearchIcon } from "lucide-react";
@@ -101,9 +102,13 @@ export const CommandMenu = () => {
         }
     };
 
+    const { setLastVisitedPath } = useAppSettings();
+    
     const handleSelect = (filePath: string) => {
         setOpen(false);
-        router.push(`/notes/${filePath}`);
+        const targetPath = `/notes/${filePath}`;
+        setLastVisitedPath(targetPath);
+        router.push(targetPath);
     };
 
     const handleSelectionChange = (keys: Selection) => {

@@ -10,7 +10,7 @@ import { CreatePageProvider, useCreatePage } from "@/contexts/CreatePageContext"
 import { usePlatform } from "@/contexts/PlatformContext";
 import { renameFile, createFile, removeFile, createFolder } from "@/services/fileservice";
 import { buildRenamedPath } from "@/utils/stringhelper";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useSidebar } from "@/hook/useSidebar";
 import { twMerge } from "tailwind-merge";
@@ -23,8 +23,9 @@ import { siteConfig } from "@/config/site";
 function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const { isMobile, isWebView } = usePlatform();
-  const { setAccessToken, editMode } = useAppSettings();
+  const { setAccessToken, editMode, setLastVisitedPath } = useAppSettings();
   const { setIsOpen, isOpen } = useCreatePage();
   const [createPagePath, setCreatePagePath] = useState<string>("");
   const [isFolderModalOpen, setIsFolderModalOpen] = useState<boolean>(false);
@@ -66,6 +67,14 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
       ? params.path.join('/')
       : params.path ?? ''
   );
+
+  // Save current path to cookie for auto-redirect on next visit
+  useEffect(() => {
+    // Only save if we're actually on a notes route
+    if (pathname && pathname.startsWith('/notes')) {
+      setLastVisitedPath(pathname);
+    }
+  }, [pathname, setLastVisitedPath]);
 
   const handleLogout = () => {
     setAccessToken(null);
