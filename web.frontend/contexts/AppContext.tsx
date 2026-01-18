@@ -10,8 +10,19 @@ import {
 } from 'react';
 import { useTheme } from 'next-themes';
 import { FileIndexDto } from '@/types/FileIndexDto';
+import { VimConfig, defaultVimConfig } from '@/types/vimConfig';
+import { useVimConfig } from '@/hook/useVimConfig';
+import { clearVimConfigFromStorage } from '@/services/vimconfigservice';
 import axios from 'axios';
 import { deleteCookie, getCookie, setCookie } from '@/utils/cookie';
+import {
+  THEME_COOKIE_KEY,
+  EDIT_MODE_COOKIE_KEY,
+  VIM_MODE_COOKIE_KEY,
+  TOKEN_COOKIE_KEY,
+  LAST_VISITED_PATH_COOKIE_KEY,
+  COOKIE_MAX_AGE_DAYS,
+} from '@/lib/constants';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -20,30 +31,24 @@ type AppContextValue = {
   accessToken: string | null;
   editMode: boolean;
   vimMode: boolean;
+  vimConfig: VimConfig;
   fileIndex: FileIndexDto[];
   lastVisitedPath: string | null;
   setThemeMode: (mode: ThemeMode) => void;
   setAccessToken: (token: string | null) => void;
   setEditMode: (mode: boolean) => void;
   setVimMode: (mode: boolean) => void;
+  setVimConfig: (config: VimConfig) => Promise<void>;
   setLastVisitedPath: (path: string | null) => void;
   clearAppSettings: () => void;
-
-
 };
-
-const THEME_COOKIE_KEY = 'app-theme';
-const EDIT_MODE_COOKIE_KEY = 'app-edit-mode';
-const VIM_MODE_COOKIE_KEY = 'app-vim-mode';
-export const TOKEN_COOKIE_KEY = 'app-token';
-const LAST_VISITED_PATH_COOKIE_KEY = 'app-last-visited-path';
-const COOKIE_MAX_AGE_DAYS = 30;
 
 const defaultValue: AppContextValue = {
   theme: 'light',
   accessToken: null,
   editMode: false,
   vimMode: false,
+  vimConfig: defaultVimConfig,
   fileIndex: [],
   lastVisitedPath: null,
   setThemeMode: () => {},
@@ -51,6 +56,7 @@ const defaultValue: AppContextValue = {
   clearAppSettings: () => {},
   setEditMode: () => {},
   setVimMode: () => {},
+  setVimConfig: async () => {},
   setLastVisitedPath: () => {},
 };
 
@@ -76,6 +82,9 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [editMode, setEditModeState] = useState<boolean>(false);
   const [vimMode, setVimModeState] = useState<boolean>(false);
   const [lastVisitedPath, setLastVisitedPathState] = useState<string | null>(null);
+  
+  // Use the useVimConfig hook for vim configuration management
+  const { config: vimConfig, updateConfig: updateVimConfig } = useVimConfig();
 
   const initializedRef = useRef(false);
   const syncFromProviderRef = useRef(false);
@@ -109,6 +118,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (cookieVimMode != null) {
       setVimModeState(cookieVimMode === 'true');
     }
+
+    // Vim config is now managed by useVimConfig hook (stale-while-revalidate)
 
     const cookieLastVisitedPath = getCookie(LAST_VISITED_PATH_COOKIE_KEY);
     if (cookieLastVisitedPath) {
@@ -176,6 +187,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setEditModeState(false);
     deleteCookie(VIM_MODE_COOKIE_KEY);
     setVimModeState(false);
+    clearVimConfigFromStorage();
     deleteCookie(LAST_VISITED_PATH_COOKIE_KEY);
     setLastVisitedPathState(null);
     setTheme('light');
@@ -190,6 +202,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setVimModeState(mode);
     setCookie(VIM_MODE_COOKIE_KEY, String(mode), COOKIE_MAX_AGE_DAYS);
   }, []);
+
+  // updateVimConfig is provided by useVimConfig hook
 
   const updateLastVisitedPath = useCallback((path: string | null) => {
     setLastVisitedPathState(path);
@@ -207,6 +221,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         accessToken,
         editMode,
         vimMode,
+        vimConfig,
         fileIndex,
         lastVisitedPath,
         setThemeMode: updateThemeMode,
@@ -214,6 +229,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         clearAppSettings,
         setEditMode: updateEditMode,
         setVimMode: updateVimMode,
+        setVimConfig: updateVimConfig,
         setLastVisitedPath: updateLastVisitedPath,
       }}
     >

@@ -12,7 +12,8 @@ import { languages } from '@codemirror/language-data'; // language highlighting 
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { RangeSetBuilder } from '@codemirror/state';
-import { vim } from "@replit/codemirror-vim";
+import { vim, Vim, getCM } from "@replit/codemirror-vim";
+import { VimConfig } from '@/types/vimConfig';
 
 // Define the decorations to be used
 const codeBlockBase = Decoration.line({
@@ -94,6 +95,7 @@ interface CodeMirrorEditorProps {
     theme?: 'light' | 'dark';
     readOnly?: boolean;
     useVim?: boolean;
+    vimConfig?: VimConfig;
 }
 
 export default function CodeMirrorEditor({
@@ -103,6 +105,7 @@ export default function CodeMirrorEditor({
     theme = 'dark', // Defaulting to dark since your styling is dark-focused
     readOnly = false,
     useVim = false,
+    vimConfig,
 }: CodeMirrorEditorProps) {
     const editorRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
@@ -302,11 +305,53 @@ export default function CodeMirrorEditor({
 
         viewRef.current = view;
 
+        // Apply vim configuration if vim mode is enabled and config is provided
+        if (useVim && vimConfig) {
+            // Wait a bit for vim to initialize
+            setTimeout(() => {
+                try {
+                    const cm = getCM(view);
+                    if (!cm) return;
+
+                    // Apply key mappings
+                    vimConfig.keyMappings.forEach((mapping) => {
+                        try {
+                            Vim.map(mapping.keys, mapping.action, mapping.mode);
+                        } catch (e) {
+                            console.warn('Failed to map key:', mapping, e);
+                        }
+                    });
+
+                    // Apply ex commands
+                    vimConfig.exCommands.forEach((cmd) => {
+                        try {
+                            // Create a function that matches the ExFn signature: (cm: CodeMirrorV, params: ExParams) => void
+                            const handlerFn = new Function('cm', 'params', cmd.handler) as any;
+                            Vim.defineEx(cmd.name, cmd.shortName, handlerFn);
+                        } catch (e) {
+                            console.warn('Failed to define ex command:', cmd, e);
+                        }
+                    });
+
+                    // Unmap keys
+                    vimConfig.unmappedKeys.forEach((unmapped) => {
+                        try {
+                            Vim.unmap(unmapped.keys, unmapped.mode);
+                        } catch (e) {
+                            console.warn('Failed to unmap key:', unmapped, e);
+                        }
+                    });
+                } catch (e) {
+                    console.error('Failed to apply vim configuration:', e);
+                }
+            }, 100);
+        }
+
         return () => {
             view.destroy();
             viewRef.current = null;
         };
-    }, [theme, readOnly, useVim]); // Note: Re-creating editor on prop change is expensive but safe for simple use cases
+    }, [theme, readOnly, useVim, vimConfig]); // Note: Re-creating editor on prop change is expensive but safe for simple use cases
 
     // Update content when initialContent changes
     useEffect(() => {

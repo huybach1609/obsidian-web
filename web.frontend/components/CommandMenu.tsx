@@ -103,7 +103,7 @@ export const CommandMenu = () => {
     };
 
     const { setLastVisitedPath } = useAppSettings();
-    
+
     const handleSelect = (filePath: string) => {
         setOpen(false);
         const targetPath = `/notes/${filePath}`;

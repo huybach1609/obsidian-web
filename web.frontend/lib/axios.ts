@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { getTokenFromCookie } from '@/contexts/AppContext';
+import { getCookie } from '@/utils/cookie';
+import { TOKEN_COOKIE_KEY } from '@/lib/constants';
 
 // Get API URL from environment variable, fallback to '/api' for production
 // const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 // axios.defaults.baseURL = API_URL;
-
 
 let API_URL = `${process.env.NEXT_PUBLIC_API_PROTOCOL}://${process.env.NEXT_PUBLIC_API_HOST}:${process.env.NEXT_PUBLIC_API_PORT}/api`;
 
@@ -26,7 +26,7 @@ export function setAuthToken(token: string | null) {
 
 // Set initial token if available
 if (typeof document !== 'undefined') {
-  const token = getTokenFromCookie();
+  const token = getCookie(TOKEN_COOKIE_KEY);
   if (token) {
     setAuthToken(token);
   }

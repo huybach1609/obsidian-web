@@ -22,7 +22,7 @@ export default function EditPage() {
     const params = useParams();
     const filePath = decodePathParam(params.path as string | string[] | undefined);
     const { theme } = useTheme();
-    const { vimMode } = useAppSettings();
+    const { vimMode, vimConfig } = useAppSettings();
     const { hasChanges, setHasChanges, setIsSaving, setOnSave, setIsContentLoading } = useEditPage();
     const [markdown, setMarkdown] = useState<string | null>(null);
     const markdownRef = useRef(markdown);
@@ -138,6 +138,7 @@ export default function EditPage() {
                     onSave={handleSave}
                     theme={theme === 'dark' ? 'dark' : 'light'}
                     useVim={vimMode}
+                    vimConfig={vimConfig}
                 />
             ) : (
                 <div className="flex-1 flex items-center justify-center">

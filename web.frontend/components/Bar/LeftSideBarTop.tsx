@@ -3,8 +3,8 @@ import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger, User } f
 import { useIsSSR } from "@react-aria/ssr";
 import { useTheme } from "next-themes";
 import Header from "../Header";
-import { EllipsisVertical, MoonIcon, SunIcon, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import router from "next/router";
+import { EllipsisVertical, MoonIcon, SunIcon, PanelLeftClose, PanelLeftOpen, SettingsIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export const LeftSideBarTop = ({
   handleLogout,
@@ -17,6 +17,7 @@ export const LeftSideBarTop = ({
   onToggleSidebar?: () => void,
   isCollapsed?: boolean
 }) => {
+  const router = useRouter();
   const { theme, resolvedTheme } = useTheme();
   const { setThemeMode, editMode, setEditMode } = useAppSettings();
   const isSSR = useIsSSR();
@@ -123,7 +124,10 @@ export const LeftSideBarTop = ({
               <p className="font-bold">Signed in as</p>
               <p className="font-bold">@admin</p>
             </DropdownItem>
-            <DropdownItem key="settings" onPress={() => router.push('/settings')}>My Settings</DropdownItem>
+            <DropdownItem 
+           startContent={<SettingsIcon size={15} />}
+            key="settings" onPress={() => router.push('/settings')}
+            >Settings</DropdownItem>
             <DropdownItem key="edit_mode" onPress={onToggleEditMode}>
               <div className="flex items-center justify-between gap-2">
                 <div>Edit mode</div>

@@ -25,7 +25,7 @@ export default function CreatePageModal({ isOpen, path, onSave, onCloseWithoutSa
     const [fileName, setFileName] = useState<string>("");
     const [content, setContent] = useState<string>("");
     const { theme } = useTheme();
-    const { vimMode } = useAppSettings();
+    const { vimMode, vimConfig } = useAppSettings();
 
     // Store initial content to compare changes
     const initialContentRef = useRef<string>("");
@@ -196,6 +196,7 @@ export default function CreatePageModal({ isOpen, path, onSave, onCloseWithoutSa
                                         onChange={handleContentChange}
                                         theme={theme === 'dark' ? 'dark' : 'light'}
                                         useVim={vimMode}
+                                        vimConfig={vimConfig}
                                     />
                                 </div>
                             </ModalBody>
