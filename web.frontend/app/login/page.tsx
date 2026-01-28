@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setAuthToken } from '@/lib/axios';
-import { login, LoginError } from '@/services/authservice';
+import { login, LoginError, registerInitialAccount } from '@/services/authservice';
 import { Button, Input, ModalBody, Modal, ModalContent, ModalHeader } from '@heroui/react';
 import { useAppSettings, getTokenFromCookie, getLastVisitedPathFromCookie } from '@/contexts/AppContext';
 import { LockIcon, MailIcon } from 'lucide-react';
@@ -16,8 +16,10 @@ export default function LoginPage() {
   const { accessToken, setAccessToken } = useAppSettings();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [isInitialAccountMode, setIsInitialAccountMode] = useState(false);
 
   useEffect(() => {
     const token = accessToken ?? getTokenFromCookie();
@@ -37,15 +39,35 @@ export default function LoginPage() {
     setLoggingIn(true);
 
     try {
-      const data = await login(username, password);
-      setAccessToken(data.token);
-      setAuthToken(data.token);
-      // Redirect to last visited path or home (which will handle redirect)
-      router.push('/');
+      if (!isInitialAccountMode) {
+        const data = await login(username, password);
+        setAccessToken(data.token);
+        setAuthToken(data.token);
+        // Redirect to last visited path or home (which will handle redirect)
+        router.push('/');
+      } else {
+        if (password !== confirmPassword) {
+          setError('Passwords do not match.');
+          return;
+        }
+
+        // Create the initial account, then log in with it
+        await registerInitialAccount(username, password);
+        const data = await login(username, password);
+        setAccessToken(data.token);
+        setAuthToken(data.token);
+        router.push('/');
+      }
     } catch (err) {
       console.error('Login error:', err);
       if (err instanceof LoginError) {
-        setError(err.message);
+        // If no credentials are configured yet, switch to "initial account" mode
+        if (!isInitialAccountMode && err.statusCode === 404 && err.message === 'CredentialsNotConfigured') {
+          setIsInitialAccountMode(true);
+          setError('No account found. Create the initial account to start using the app.');
+        } else {
+          setError(err.message);
+        }
       } else {
         setError('Login failed. Please try again.');
       }
@@ -84,8 +106,8 @@ export default function LoginPage() {
                   endContent={
                     <LockIcon className="text-2xl text-default-400 pointer-events-none shrink-0" />
                   }
-                  label="Password"
-                  placeholder="Enter your password"
+                  label={isInitialAccountMode ? 'New password' : 'Password'}
+                  placeholder={isInitialAccountMode ? 'Enter a new password' : 'Enter your password'}
                   type="password"
                   variant="bordered"
                   value={password}
@@ -94,6 +116,27 @@ export default function LoginPage() {
                   isDisabled={loggingIn}
                   autoComplete="current-password"
                 />
+                {isInitialAccountMode && (
+                  <Input
+                    endContent={
+                      <LockIcon className="text-2xl text-default-400 pointer-events-none shrink-0" />
+                    }
+                    label="Confirm password"
+                    placeholder="Re-enter your password"
+                    type="password"
+                    variant="bordered"
+                    value={confirmPassword}
+                    onValueChange={setConfirmPassword}
+                    isRequired
+                    isDisabled={loggingIn}
+                    autoComplete="new-password"
+                  />
+                )}
+                {isInitialAccountMode && (
+                  <p className="text-xs text-default-500">
+                    This will create the initial account and store it securely in your Obsidian vault.
+                  </p>
+                )}
                 {error && (
                   <div className="p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-md text-danger-700 dark:text-danger-400 text-sm">
                     {error}
@@ -104,10 +147,16 @@ export default function LoginPage() {
                 <Button 
                   color="primary" 
                   type="submit"
-                  isDisabled={loggingIn || !username || !password}
+                  isDisabled={loggingIn || !username || !password || (isInitialAccountMode && !confirmPassword)}
                   isLoading={loggingIn}
                 >
-                  {loggingIn ? 'Logging in...' : 'Sign in'}
+                  {loggingIn
+                    ? isInitialAccountMode
+                      ? 'Creating account...'
+                      : 'Logging in...'
+                    : isInitialAccountMode
+                      ? 'Create initial account'
+                      : 'Sign in'}
                 </Button>
               </ModalFooter>
             </form>

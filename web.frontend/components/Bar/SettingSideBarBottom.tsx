@@ -1,5 +1,5 @@
 import { Link, Listbox, ListboxItem, ListboxSection } from "@heroui/react"
-import {  SunIcon, UserIcon } from "lucide-react"
+import { ArrowLeftIcon, SunIcon, Undo2, UserIcon } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import type { Selection } from "@react-types/shared"
 
@@ -12,44 +12,37 @@ export const SettingSideBarBottom = () => {
         const selectedKey = Array.from(keys)[0] as string
         if (selectedKey === "Vim mode") {
             router.push("/settings/vim")
-        } else if (selectedKey === "theme") {
-            router.push("/settings")
         } else if (selectedKey === "appearance") {
             router.push("/settings")
         } else if (selectedKey === "account") {
-            router.push("/settings")
+            router.push("/settings/account")
         }
     }
 
-    const selectedKeys = pathname === "/settings/vim" ? new Set(["Vim mode"]) : 
-                         pathname === "/settings" ? new Set(["theme"]) : 
-                         new Set<string>()
+    const selectedKeys = pathname === "/settings/vim" ? new Set(["Vim mode"]) :
+        pathname === "/settings" ? new Set(["theme"]) :
+            pathname === "/settings/account" ? new Set(["account"]) :
+                new Set<string>()
 
     return (
         <div className="">
-            <Link href="/">back</Link>
-            
-            <Listbox 
+
+            <Listbox
                 aria-label="Settings"
-                className="p-2 gap-0 divide-y  overflow-visible "
+                className="p-[5px] gap-0 divide-y  overflow-visible "
                 itemClasses={{
-                    base: "px-3 first:rounded-t-medium last:rounded-b-medium rounded-none gap-3 h-12 data-[hover=true]:bg-default-100/80",
+                    base: "px-[5px] rounded-full gap-[5px]  data-[hover=true]:bg-default-100/80",
                 }}
                 selectedKeys={selectedKeys}
                 onSelectionChange={handleSelectionChange}
                 selectionMode="single"
             >
                 <ListboxSection title="General">
-                    <ListboxItem key="theme" startContent={<SunIcon size={15} />}>
-                        <div>Theme</div>
+                    <ListboxItem key="appearance" startContent={<SunIcon size={15} />}>
+                        <div>Appearance</div>
                     </ListboxItem>
                     <ListboxItem key="Vim mode" startContent={<img src="/Vimlogo.svg" alt="Vim" className="h-4 w-4" />}>
                         <div>Vim mode</div>
-                    </ListboxItem>
-                </ListboxSection>
-                <ListboxSection title="Appearance">
-                    <ListboxItem key="appearance" startContent={<SunIcon size={15} />}>
-                        <div>Appearance</div>
                     </ListboxItem>
                 </ListboxSection>
                 <ListboxSection title="Account">
@@ -57,6 +50,9 @@ export const SettingSideBarBottom = () => {
                         <div>Account</div>
                     </ListboxItem>
                 </ListboxSection>
+                <ListboxItem key="back" startContent={<Undo2 size={15} />} onPress={() => router.push('/')}>
+                    <div>Back</div>
+                </ListboxItem>
             </Listbox>
         </div>
     )
