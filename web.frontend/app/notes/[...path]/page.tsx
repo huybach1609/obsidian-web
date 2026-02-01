@@ -148,7 +148,7 @@ export default function NotesPage() {
                         id="preview-area"
                         className={`flex-1 p-4 ${textWrap
                             ? 'break-words whitespace-pre-wrap'
-                            : 'whitespace-pre overflow-x-auto'
+                            : 'whitespace-pre overflow-x-auto no-wrap'
                             }`}
                     >
                         <MarkdownContent markdown={markdown} fileIndex={fileIndex} />
