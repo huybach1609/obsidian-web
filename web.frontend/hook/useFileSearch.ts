@@ -18,7 +18,7 @@ export const useFileSearch = () => {
     });
   }, [fileIndex]);
 
-  // 2. Thực hiện search
+  // 3. Thực hiện search
   const results = useMemo<FileIndexDto[]>(() => {
     if (!fuse) return [];
     if (!query.trim()) return [];

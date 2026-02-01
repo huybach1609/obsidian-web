@@ -1,7 +1,9 @@
 "use client";
 import Header from "@/components/Header";
-import { getFilePreview, toggleCheckbox } from "@/services/fileservice";
-import { Button, ScrollShadow, Spinner } from "@heroui/react";
+import { getFileMarkdown, toggleCheckbox } from "@/services/fileservice";
+import { MarkdownContent } from "@/lib/markdown/MarkdownContent";
+import { useAppSettings } from "@/contexts/AppContext";
+import { Button, Spinner } from "@heroui/react";
 import { AlignLeft, EyeIcon, PencilIcon, WrapText } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -16,9 +18,10 @@ export default function NotesPage() {
     const params = useParams();
     const router = useRouter();
     const filePath = decodePathParam(params.path as string | string[] | undefined);
+    const { fileIndex } = useAppSettings();
 
     const [loading, setLoading] = useState(false);
-    const [content, setContent] = useState('');
+    const [markdown, setMarkdown] = useState('');
     const [textWrap, setTextWrap] = useState(true);
     const previewAreaRef = useRef<HTMLDivElement>(null);
 
@@ -26,8 +29,8 @@ export default function NotesPage() {
         if (!filePath) return;
         setLoading(true);
         try {
-            const response = await getFilePreview(filePath);
-            setContent(response);
+            const { markdown: md } = await getFileMarkdown(filePath);
+            setMarkdown(md);
         } catch (error) {
             console.error('Error loading file:', error);
         } finally {
@@ -79,7 +82,7 @@ export default function NotesPage() {
         return () => {
             previewArea.removeEventListener('click', handleCheckboxClick);
         };
-    }, [content, filePath, loadPreview]);
+    }, [markdown, filePath, loadPreview]);
 
     // Update browser tab title based on fileName
     useEffect(() => {
@@ -143,12 +146,13 @@ export default function NotesPage() {
                     <div
                         ref={previewAreaRef}
                         id="preview-area"
-                        className={`flex-1  p-4 ${textWrap
+                        className={`flex-1 p-4 ${textWrap
                             ? 'break-words whitespace-pre-wrap'
                             : 'whitespace-pre overflow-x-auto'
                             }`}
-                        dangerouslySetInnerHTML={{ __html: content }}
-                    />
+                    >
+                        <MarkdownContent markdown={markdown} fileIndex={fileIndex} />
+                    </div>
                 </div>
             </AnimatedContent>
         </div>
