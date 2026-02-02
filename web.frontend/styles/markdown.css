@@ -203,6 +203,22 @@
   padding: 0;
   font-size: inherit;
 }
+#preview-area ul li {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+}
+
+/* Nested ul (e.g. task list) on a new line under the li text */
+#preview-area ul li > ul {
+  flex-basis: 100%;
+}
+
+#preview-area ul li:not(.task-list-item)::before {
+  content: "•";
+  margin-right: 0.35em;
+  color: var(--markdown-text);
+}
 
 /* Tables */
 #preview-area table {
