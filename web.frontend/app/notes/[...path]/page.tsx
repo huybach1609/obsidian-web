@@ -1,14 +1,18 @@
 "use client";
 import Header from "@/components/Header";
+
 import { getFileMarkdown, toggleCheckbox } from "@/services/fileservice";
 import { MarkdownContent } from "@/lib/markdown/MarkdownContent";
 import { useAppSettings } from "@/contexts/AppContext";
 import { Button, Spinner } from "@heroui/react";
 import { AlignLeft, EyeIcon, PencilIcon, WrapText } from "lucide-react";
+
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { siteConfig } from "@/config/site";
 import { decodePathParam } from "@/utils/stringhelper";
+import { usePlatform } from "@/contexts/PlatformContext";
+import { useSidebarContext } from "@/contexts/SidebarContext";
 
 import '../../../styles/markdown.css';
 import AnimatedContent from "@/components/AnimatedContent";
@@ -18,6 +22,8 @@ export default function NotesPage() {
     const params = useParams();
     const router = useRouter();
     const filePath = decodePathParam(params.path as string | string[] | undefined);
+    const { isMobile, isWebView } = usePlatform();
+    const sidebar = useSidebarContext();
     const { fileIndex } = useAppSettings();
 
     const [loading, setLoading] = useState(false);
@@ -110,7 +116,18 @@ export default function NotesPage() {
                             {filePath}
                         </span>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-1">
+                        {(isMobile || isWebView) && sidebar && (
+                            <Button
+                                isIconOnly
+                                variant="light"
+                                size="sm"
+                                onPress={() => sidebar.toggleSidebar()}
+                                aria-label="Toggle sidebar"
+                            >
+                                <PanelLeftOpen className="h-5 w-5" />
+                            </Button>
+                        )}
                         {/* wrap text button */}
                         <Button
                             isIconOnly
@@ -134,7 +151,6 @@ export default function NotesPage() {
                         >
                             <PencilIcon className="h-5 w-5" />
                         </Button>
-
                     </div>
                 </div>
             </Header>

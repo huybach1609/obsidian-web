@@ -8,6 +8,7 @@ import TreeView from "@/components/TreeView";
 import { useAppSettings } from "@/contexts/AppContext";
 import { CreatePageProvider, useCreatePage } from "@/contexts/CreatePageContext";
 import { usePlatform } from "@/contexts/PlatformContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import { renameFile, createFile, removeFile, createFolder } from "@/services/fileservice";
 import { buildRenamedPath } from "@/utils/stringhelper";
 import { useRouter, useParams, usePathname } from "next/navigation";
@@ -81,18 +82,37 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
-  // Use sidebar hook for all sidebar logic
+  // Use sidebar hook for desktop logic
   const {
-    isCollapsed,
+    isCollapsed: desktopCollapsed,
     sidebarRef,
-    isSidebarVisible,
+    isSidebarVisible: desktopSidebarVisible,
     sidebarVariants,
     handleMouseEnter,
     handleMouseLeave,
-    toggle: toggleSidebar,
+    toggle: desktopToggleSidebar,
   } = useSidebar(isMobile, isWebView, {
     sidebarWidth: sidebarWidth,
   });
+
+  // Mobile sidebar open/close state (separate from desktop collapse logic)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const isSidebarVisible = (isMobile || isWebView)
+    ? isMobileSidebarOpen
+    : desktopSidebarVisible;
+
+  const isCollapsed = (isMobile || isWebView)
+    ? !isMobileSidebarOpen
+    : desktopCollapsed;
+
+  const toggleSidebar = () => {
+    if (isMobile || isWebView) {
+      setIsMobileSidebarOpen((prev) => !prev);
+    } else {
+      desktopToggleSidebar();
+    }
+  };
 
   // Resize handlers
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -129,18 +149,6 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
       };
     }
   }, [isResizing, handleResizeMove, handleResizeEnd]);
-
-  // Mobile: Hide sidebar, show only content
-  if (isMobile || isWebView) {
-    return (
-      <div className="flex flex-col h-screen bg-background">
-        <LeftSideBarTop handleLogout={handleLogout} isMobile={true} />
-        <div className="flex-1 overflow-hidden">
-          {children}
-        </div>
-      </div>
-    );
-  }
 
 
   const handleRename = async (oldPath: string, newName: string) => {
@@ -340,107 +348,116 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     setCreatePagePath("");
   };
 
-  // Desktop: show sidebar and content with animation
+  // Unified layout (desktop + mobile) with animated sidebar
   return (
-    <div className={twMerge("flex h-screen bg-background text-foreground relative",
-      isCollapsed ? "flex-row" : "flex-col")}>
-      <CommandMenu />
-
-      {/* Left Sidebar - Animated with Framer Motion, remains mounted when collapsed */}
-      {/* Animation: Uses translateX to slide in/out, not width changes */}
-      <motion.div
-        ref={sidebarRef}
+    <SidebarProvider toggleSidebar={toggleSidebar}>
+      <div
         className={twMerge(
-          "bg-background flex flex-col fixed left-0 z-40",
-          isCollapsed
-            ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
-            : "top-0 bottom-0"
+          "flex h-screen bg-background text-foreground relative",
+          isCollapsed ? "flex-row" : "flex-col"
         )}
-        style={{ width: sidebarWidth }}
-        variants={sidebarVariants}
-        animate={isSidebarVisible ? 'expanded' : 'collapsed'}
-        initial={false}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
-        <LeftSideBarTop
-          handleLogout={handleLogout}
-          isMobile={false}
-          onToggleSidebar={toggleSidebar}
-          isCollapsed={isCollapsed}
-        />
+        <CommandMenu />
 
-        <TreeActions
-          onCreateFile={() => handleOpenCreatePage("/")}
-          onCreateFolder={() => handleOpenCreateFolder("/")}
-          treeViewRef={treeViewRef}
-        />
-
-        <div className="flex-1 min-h-0">
-          <TreeView
-            ref={treeViewRef}
-            path="/"
-            selectedPath={selectedPath || undefined}
-            onSelect={(path) => {
-              if (editMode) {
-                router.push(`/notes/edit/${path}`)
-              } else {
-                router.push(`/notes/${path}`)
-              }
-            }}
-            onCopyLink={(path) => {
-              console.log("copy link", path);
-            }}
-            onRemoveFile={handleRemoveFile}
-            onRename={handleRename}
-            onOpenCreatePage={handleOpenCreatePage}
-            onCreateFolder={handleOpenCreateFolder}
-            isAuthenticated={true}
+        {/* Left Sidebar - Animated with Framer Motion, remains mounted when collapsed */}
+        {/* Animation: Uses translateX to slide in/out, not width changes */}
+        <motion.div
+          ref={sidebarRef}
+          className={twMerge(
+            "bg-background flex flex-col fixed left-0 z-40",
+            isCollapsed
+              ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
+              : "top-0 bottom-0"
+          )}
+          style={{ width: sidebarWidth }}
+          variants={sidebarVariants}
+          animate={isSidebarVisible ? "expanded" : "collapsed"}
+          initial={false}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <LeftSideBarTop
+            handleLogout={handleLogout}
+            isMobile={isMobile || isWebView}
+            onToggleSidebar={toggleSidebar}
+            isCollapsed={isCollapsed}
           />
 
-          <CreatePageModal
-            isOpen={isOpen}
-            path={createPagePath}
-            onSave={handleSaveAndClose}
-            onCloseWithoutSave={handleCloseWithoutSave}
+          <TreeActions
+            onCreateFile={() => handleOpenCreatePage("/")}
+            onCreateFolder={() => handleOpenCreateFolder("/")}
+            treeViewRef={treeViewRef}
           />
 
-          <CreateFolderModal
-            isOpen={isFolderModalOpen}
-            path={createFolderPath}
-            onSave={handleSaveFolder}
-            onCloseWithoutSave={handleCloseFolderModal}
-          />
-        </div>
+          <div className="flex-1 min-h-0">
+            <TreeView
+              ref={treeViewRef}
+              path="/"
+              selectedPath={selectedPath || undefined}
+              onSelect={(path) => {
+                if (editMode) {
+                  router.push(`/notes/edit/${path}`);
+                } else {
+                  router.push(`/notes/${path}`);
+                }
+              }}
+              onCopyLink={(path) => {
+                console.log("copy link", path);
+              }}
+              onRemoveFile={handleRemoveFile}
+              onRename={handleRename}
+              onOpenCreatePage={handleOpenCreatePage}
+              onCreateFolder={handleOpenCreateFolder}
+              isAuthenticated={true}
+            />
 
-        {/* Resize Handle */}
-        {!isCollapsed && (
-          <div
-            className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-primary/30 transition-all z-50 group"
-            onMouseDown={handleResizeStart}
-            style={{ touchAction: 'none' }}
-          >
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CreatePageModal
+              isOpen={isOpen}
+              path={createPagePath}
+              onSave={handleSaveAndClose}
+              onCloseWithoutSave={handleCloseWithoutSave}
+            />
+
+            <CreateFolderModal
+              isOpen={isFolderModalOpen}
+              path={createFolderPath}
+              onSave={handleSaveFolder}
+              onCloseWithoutSave={handleCloseFolderModal}
+            />
           </div>
-        )}
-      </motion.div>
 
-      {/* Main Content Area - Smoothly adjusts based on sidebar state */}
-      <motion.div
-        className="flex-1 min-w-0"
-        style={{
-          marginLeft: isSidebarVisible ? sidebarWidth : 0,
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 100,
-          damping: 70,
-        }}
-      >
-        {children}
-      </motion.div>
-    </div>
-  )
+          {/* Resize Handle (desktop only) */}
+          {!isCollapsed && !isMobile && !isWebView && (
+            <div
+              className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-primary/30 transition-all z-50 group"
+              onMouseDown={handleResizeStart}
+              style={{ touchAction: "none" }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          )}
+        </motion.div>
+
+        {/* Main Content Area - Smoothly adjusts based on sidebar state */}
+        <motion.div
+          className="flex-1 min-w-0"
+          style={{
+            // On desktop, shift content when sidebar is visible.
+            // On mobile, keep content full width and let sidebar overlay.
+            marginLeft:
+              !isMobile && !isWebView && isSidebarVisible ? sidebarWidth : 0,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 70,
+          }}
+        >
+          {children}
+        </motion.div>
+      </div>
+    </SidebarProvider>
+  );
 }
 
 export default function NotesLayout({ children }: { children: React.ReactNode }) {
