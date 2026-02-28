@@ -1,6 +1,7 @@
 import { useAppSettings } from "@/contexts/AppContext";
 import {
   Button,
+  ButtonGroup,
   Dropdown,
   DropdownItem,
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   SettingsIcon,
+  FileSearchCorner,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -50,59 +52,45 @@ export const LeftSideBarTop = ({
   if (isMobile) {
     return (
       <Header className="flex items-center justify-between ">
-        <div className="flex items-center justify-between h-full">
-          <Dropdown
-            placement="bottom-start"
-            classNames={{
-              base: "before:bg-default-200", // change arrow background
-              content:
-                "bg-background/90 text-foreground border-none backdrop-blur-xs",
-            }}
-          >
-            <DropdownTrigger>
-              <User
-                as="button"
-                avatarProps={{
-                  isBordered: true,
-                  src: "/blank.webp",
-                }}
-                className="transition-transform"
-                description="@admin_123"
-                name="Admin"
-              />
-            </DropdownTrigger>
-            <DropdownMenu aria-label="User Actions" variant="flat">
-              <DropdownSection title="Options">
-                <DropdownItem
-                  key="settings"
-                  onPress={() => router.push("/settings")}
-                >
-                  My Settings
-                </DropdownItem>
-                <DropdownItem key="edit_mode" onPress={onToggleEditMode}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div>Edit mode</div>
-                    <div className="text-xs text-foreground-500">
-                      {editMode ? "On" : "Off"}
-                    </div>
-                  </div>
-                </DropdownItem>
-              </DropdownSection>
-            </DropdownMenu>
-          </Dropdown>
-        </div>
-
-        <Dropdown>
+        <Dropdown
+          placement="bottom-start"
+          classNames={{
+            base: "before:bg-default-200", // change arrow background
+            content:
+              "bg-background/90 text-foreground border-none backdrop-blur-xs",
+          }}
+        >
+          
           <DropdownTrigger>
-            <Button variant="light" isIconOnly>
-              <EllipsisVertical className="h-5 w-5 text-foreground" />
-            </Button>
+            <User
+              as="button"
+              avatarProps={{
+                isBordered: true,
+                src: "/blank.webp",
+              }}
+              className="transition-transform"
+              description="@admin_123"
+              name="Admin"
+            />
           </DropdownTrigger>
-          <DropdownMenu aria-label="">
-            <DropdownItem key="profile" className="h-14 gap-2">
-              <p className="font-bold">Signed in as</p>
-              <p className="font-bold">@admin</p>
-            </DropdownItem>
+          <DropdownMenu aria-label="User Actions" variant="flat">
+            <DropdownSection title="Options">
+              <DropdownItem
+                key="settings"
+                onPress={() => router.push("/settings")}
+              >
+                My Settings
+              </DropdownItem>
+              <DropdownItem key="edit_mode" onPress={onToggleEditMode}>
+                <div className="flex items-center justify-between gap-2">
+                  <div>Edit mode</div>
+                  <div className="text-xs text-foreground-500">
+                    {editMode ? "On" : "Off"}
+                  </div>
+                </div>
+              </DropdownItem>
+            </DropdownSection>
+
             <DropdownItem key="theme_switch" onPress={onChange}>
               <div className="flex items-center justify-between gap-2">
                 <div>Theme switch</div>
@@ -120,6 +108,32 @@ export const LeftSideBarTop = ({
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
+
+        <ButtonGroup className="">
+          <Button
+            variant="light"
+            isIconOnly
+            className="bg-foreground/10"
+            onPress={() => {
+              // Simulate Ctrl+K to open CommandMenu
+              if (typeof document !== "undefined") {
+                const event = new KeyboardEvent("keydown", {
+                  key: "k",
+                  ctrlKey: true,
+                });
+                document.dispatchEvent(event);
+              }
+            }}
+            aria-label="Open search"
+          >
+            <FileSearchCorner className="h-5 w-5 text-foreground" />
+          </Button>
+          <ToggleSidebarButton
+            className="bg-foreground/10"
+            isCollapsed={isCollapsed ?? false}
+            onToggleSidebar={onToggleSidebar ?? (() => {})}
+          />
+        </ButtonGroup>
       </Header>
     );
   }
@@ -186,21 +200,40 @@ export const LeftSideBarTop = ({
         </Dropdown>
 
         {/* Sidebar Toggle Button */}
-        {onToggleSidebar && (
-          <Button
-            variant="light"
-            isIconOnly
-            onPress={onToggleSidebar}
-            aria-label="Toggle sidebar"
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen className="h-5 w-5 text-foreground" />
-            ) : (
-              <PanelLeftClose className="h-5 w-5 text-foreground" />
-            )}
-          </Button>
-        )}
+        <ToggleSidebarButton
+          className=""
+          isCollapsed={isCollapsed ?? false}
+          onToggleSidebar={onToggleSidebar ?? (() => {})}
+        />
+
       </div>
     </Header>
+  );
+};
+const ToggleSidebarButton = ({
+  className,
+  isCollapsed,
+  onToggleSidebar,
+}: {
+  className: string;
+  isCollapsed: boolean;
+  onToggleSidebar: () => void;
+}) => {
+  return (
+    onToggleSidebar && (
+      <Button
+        variant="light"
+        className={className}
+        isIconOnly
+        onPress={onToggleSidebar}
+        aria-label="Toggle sidebar"
+      >
+        {isCollapsed ? (
+          <PanelLeftOpen className="h-5 w-5 text-foreground" />
+        ) : (
+          <PanelLeftClose className="h-5 w-5 text-foreground" />
+        )}
+      </Button>
+    )
   );
 };
