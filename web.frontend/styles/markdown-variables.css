@@ -1,148 +1,42 @@
-/* styles/markdown-variables.css or app/globals.css */
+/* Markdown view theme – aligned with tailwind.config.js (HeroUI light/dark) */
 
 :root {
-  /* Light theme variables – synced from styles/globals.css */
+  /* Light theme – tailwind themes.light.colors */
   --markdown-bg: #fcfcf7;
   --markdown-text: #03071e;
-  --markdown-h1: #d32f2f;
-  --markdown-h2: #ff7043;
-  --markdown-code-bg: #ecd6c0;
-  --markdown-code-text: #333333;
-  --markdown-quote-border: #bdbdbd;
-  --markdown-quote-text: #666666;
+  --markdown-text-muted: #333333;
+  --markdown-h1: #d32f2f;       /* primary */
+  --markdown-h2: #ff7043;       /* secondary */
+  --markdown-h3: #d32f2f;
   --markdown-border: #e0e0e0;
+  --markdown-code-bg: #ecd6c0; /* codeBackground */
+  --markdown-code-text: #333333; /* code */
+  --markdown-quote-border: #bdbdbd; /* quoteBorder */
+  --markdown-quote-text: #666666;   /* quote */
+  --markdown-link: #d32f2f;        /* primary – external & internal resolved */
+  --markdown-link-hover: #b71c1c;
+  --markdown-link-unresolved: #666666; /* muted – internal unresolved */
+  --markdown-warning: #ff9800;
+  --markdown-error: #c62828;
 }
 
-[data-theme="dark"] {
-  /* Dark theme variables – synced from styles/globals.css (.dark) */
-  --markdown-bg: #1e1e1e;
-  --markdown-text: #f8f8f2;
-  --markdown-h1: #ff6961;
-  --markdown-h2: #ffa07a;
-  --markdown-code-bg: #333333;
-  --markdown-code-text: #f8f8f2;
-  --markdown-quote-border: #555555;
-  --markdown-quote-text: #cccccc;
-  --markdown-border: #444444;
-
-  --token-keyword: #d73a49;
-  --token-string: #032f62;
-  --token-number: #005cc5;
-  --token-comment: #6a737d;
-  --token-def: #6f42c1;
-  --token-variable: #24292e;
-  --token-property: #c678dd; /* Purple for JSON keys */
-  --token-class: #98c379;    /* Green for Classes */
-}
-
-/* Alternative: using class-based theme */
+[data-theme="dark"],
 .dark {
-  /* Same dark theme as above to stay in sync with globals.css */
+  /* Dark theme – tailwind themes.dark.colors */
   --markdown-bg: #1e1e1e;
-  --markdown-text: #f8f8f2;
-  --markdown-h1: #ff6961;
-  --markdown-h2: #ffa07a;
-  --markdown-code-bg: #333333;
-  --markdown-code-text: #f8f8f2;
+  --markdown-text: #f8f8f2;       /* foreground */
+  --markdown-text-muted: #cccccc; /* foreground1 */
+  --markdown-h1: #ff6961;         /* primary */
+  --markdown-h2: #ffa07a;         /* secondary */
+  --markdown-h3: #ff6961;
+  --markdown-border: #444444;
+  --markdown-code-bg: #333333;    /* codeBackground */
+  --markdown-code-text: #f8f8f2; /* code */
   --markdown-quote-border: #555555;
   --markdown-quote-text: #cccccc;
-  --markdown-border: #444444;
-
-  --token-keyword: #c678dd;   /* Purple */
-  --token-string: #98c379;    /* Green */
-  --token-number: #d19a66;    /* Orange */
-  --token-comment: #5c6370;   /* Grey */
-  --token-def: #e06c75;       /* Red */
-  --token-variable: #abb2bf;  /* White/Grey */
-  --token-property: #e06c75; /* Red/Pink for JSON keys */
-  --token-class: #e5c07b;    /* Gold/Yellow for Classes */
-}
-
-/* Keep your existing preview styles */
-#preview-area .markdown-body {
-  font-family: var(--font-sans);
-  color: var(--markdown-text);
-  background: var(--markdown-bg);
-  padding: 20px;
-  line-height: 1.4;
-}
-
-#preview-area .markdown-body h1 {
-  font-size: 1.8rem;
-  margin-top: 0rem;
-  color: var(--markdown-h1);
-}
-
-#preview-area .markdown-body h2 {
-  margin-top: 0rem;
-  color: var(--markdown-h2);
-}
-
-#preview-area .markdown-body ul,
-#preview-area .markdown-body ol {
-  margin: 0em 0;
-  padding-left: 1em;
-  line-height: 1;
-}
-
-#preview-area .markdown-body ul {
-  list-style-type: disc;
-}
-
-#preview-area .markdown-body ol {
-  list-style-type: decimal;
-}
-
-#preview-area .markdown-body li {
-  margin: 0;
-  color: var(--markdown-text);
-  line-height: 0.8;
-}
-
-#preview-area .markdown-body ul ul,
-#preview-area .markdown-body ol ol,
-#preview-area .markdown-body ul ol,
-#preview-area .markdown-body ol ul {
-  margin: 0.5em 0;
-}
-
-#preview-area .markdown-body ul ul {
-  list-style-type: circle;
-}
-
-#preview-area .markdown-body ul ul ul {
-  list-style-type: square;
-}
-
-#preview-area .markdown-body table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-#preview-area .markdown-body th,
-#preview-area .markdown-body td {
-  border: 1px solid var(--markdown-border);
-  padding: 8px;
-}
-
-#preview-area .markdown-body code {
-  font-family: var(--font-mono);
-  background-color: color-mix(in srgb, var(--markdown-code-bg) 80%, transparent);
-  padding: 10px 10px;
-  border-radius: 4px;
-  color: var(--markdown-code-text);
-}
-
-#preview-area .markdown-body pre {
-  font-family: var(--font-mono);
-}
-
-#preview-area .markdown-body pre code {
-  font-family: var(--font-mono);
-}
-
-#preview-area .markdown-body blockquote {
-  border-left: 4px solid var(--markdown-quote-border);
-  padding-left: 12px;
-  color: var(--markdown-quote-text);
+  --markdown-link: #ff6961;
+  --markdown-link-hover: #ff8a80;
+  --markdown-link-unresolved: #888888;
+  --markdown-warning: #ffb74d;
+  --markdown-error: #ef5350;
 }

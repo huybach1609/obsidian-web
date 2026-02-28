@@ -15,6 +15,12 @@ export interface FileResponse {
   content: string;
   path: string;
 }
+
+/** V2 API: raw markdown for frontend rendering */
+export interface FileMarkdownResponse {
+  path: string;
+  markdown: string;
+}
 export async function getTree(path: string, depth: number = 1): Promise<TreeItemDto[]> {
   const { data } = await axios.get<TreeItemDto[]>('/tree', { params: { path, depth } });
   return data;
@@ -40,6 +46,12 @@ export async function renameFile(oldPath: string, newPath: string) {
 
 export async function getFilePreview(path: string) {
   const { data } = await axios.get<string>('/preview', { params: { path } });
+  return data;
+}
+
+/** Fetch raw markdown from v2 API for frontend rendering */
+export async function getFileMarkdown(path: string): Promise<FileMarkdownResponse> {
+  const { data } = await axios.get<FileMarkdownResponse>('/v2/preview', { params: { path } });
   return data;
 }
 
