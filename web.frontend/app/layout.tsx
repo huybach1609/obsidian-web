@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@mdxeditor/editor/style.css";
+import "@/styles/markdown.css";
 import { Metadata, Viewport } from "next";
 import clsx from "clsx";
 
@@ -41,10 +42,16 @@ export default function RootLayout({
           fontMono.variable,
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-            <main className=" relative flex flex-col h-screen w-full text-foreground bg-background">
-              {children}
-            </main>
+        <Providers
+          themeProps={{
+            attribute: "data-theme",
+            defaultTheme: "obsidian-dark",
+            themes: ["obsidian", "obsidian-dark"],
+          }}
+        >
+          <main className=" relative flex flex-col h-screen w-full text-foreground bg-background">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

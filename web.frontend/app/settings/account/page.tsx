@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
-import { AccountInfo, getAccount, LoginError, updateAccount } from '@/services/authservice';
+import { useEffect, useState } from "react";
+import { Button, Card, Input } from "@heroui/react";
+
+import {
+  AccountInfo,
+  getAccount,
+  LoginError,
+  updateAccount,
+} from "@/services/authservice";
 
 export default function AccountSettingsPage() {
   const [account, setAccount] = useState<AccountInfo | null>(null);
-  const [username, setUsername] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -20,17 +26,18 @@ export default function AccountSettingsPage() {
     const loadAccount = async () => {
       try {
         const data = await getAccount();
+
         if (isMounted) {
           setAccount(data);
           setUsername(data.username);
         }
       } catch (err) {
-        console.error('Failed to load account info:', err);
+        console.error("Failed to load account info:", err);
         if (isMounted) {
           if (err instanceof LoginError) {
             setError(err.message);
           } else {
-            setError('Failed to load account information.');
+            setError("Failed to load account information.");
           }
         }
       }
@@ -48,31 +55,37 @@ export default function AccountSettingsPage() {
     setSuccess(null);
 
     if (!currentPassword) {
-      setError('Current password is required.');
+      setError("Current password is required.");
+
       return;
     }
 
     if (newPassword && newPassword !== confirmNewPassword) {
-      setError('New passwords do not match.');
+      setError("New passwords do not match.");
+
       return;
     }
 
     setIsSaving(true);
     try {
-      await updateAccount(currentPassword, username !== account?.username ? username : undefined, newPassword || undefined);
-      setSuccess('Account updated successfully.');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmNewPassword('');
+      await updateAccount(
+        currentPassword,
+        username !== account?.username ? username : undefined,
+        newPassword || undefined,
+      );
+      setSuccess("Account updated successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
       if (account) {
         setAccount({ ...account, username });
       }
     } catch (err) {
-      console.error('Failed to update account:', err);
+      console.error("Failed to update account:", err);
       if (err instanceof LoginError) {
         setError(err.message);
       } else {
-        setError('Failed to update account. Please try again.');
+        setError("Failed to update account. Please try again.");
       }
     } finally {
       setIsSaving(false);
@@ -84,70 +97,69 @@ export default function AccountSettingsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Account</h1>
-          <p className="text-foreground/60 mt-2">Manage your username and password</p>
+          <p className="text-foreground/60 mt-2">
+            Manage your username and password
+          </p>
         </div>
       </div>
 
       <Card>
-        <CardHeader>
+        <Card.Header>
           <h2 className="text-xl font-semibold">Account details</h2>
-        </CardHeader>
-        <CardBody className="space-y-4">
+        </Card.Header>
+        <Card.Content className="space-y-4">
           <Input
-            label="Username"
+            disabled={isSaving}
+            // label="Username"
             placeholder="Enter your username"
             value={username}
-            onValueChange={setUsername}
-            isDisabled={isSaving}
+            onChange={(e) => setUsername(e.target.value)}
           />
           <Input
-            label="Current password"
+            disabled={isSaving}
             placeholder="Enter your current password"
             type="password"
             value={currentPassword}
-            onValueChange={setCurrentPassword}
-            isDisabled={isSaving}
+            onChange={(e) => setCurrentPassword(e.target.value)}
           />
           <Input
-            label="New password"
+            disabled={isSaving}
             placeholder="Enter a new password (optional)"
             type="password"
             value={newPassword}
-            onValueChange={setNewPassword}
-            isDisabled={isSaving}
+            onChange={(e) => setNewPassword(e.target.value)}
           />
+          
           <Input
-            label="Confirm new password"
+            disabled={isSaving}
             placeholder="Re-enter new password"
             type="password"
             value={confirmNewPassword}
-            onValueChange={setConfirmNewPassword}
-            isDisabled={isSaving}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
           />
 
           {error && (
-            <div className="p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-md text-danger-700 dark:text-danger-400 text-sm">
+            <div className="p-3 bg-danger/10 dark:bg-danger/20 border border-danger/20 dark:border-danger/40 rounded-md text-danger text-sm">
               {error}
             </div>
           )}
           {success && (
-            <div className="p-3 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-md text-success-700 dark:text-success-400 text-sm">
+            <div className="p-3 bg-success/10 dark:bg-success/20 border border-success/20 dark:border-success/40 rounded-md text-success text-sm">
               {success}
             </div>
           )}
 
           <div className="flex justify-end">
             <Button
-              color="primary"
-              onPress={handleSave}
-              isDisabled={isSaving || !username || !currentPassword}
-              isLoading={isSaving}
               className="font-semibold"
+              isDisabled={isSaving || !username || !currentPassword}
+              // isLoading={isSaving}
+              onPress={handleSave}
             >
-              Save changes
+              {isSaving ? "Saving..." : "Save changes"}
             </Button>
           </div>
-        </CardBody>
+        </Card.Content>
       </Card>
     </div>
   );

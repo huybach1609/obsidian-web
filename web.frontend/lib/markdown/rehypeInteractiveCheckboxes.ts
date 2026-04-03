@@ -1,5 +1,6 @@
-import type { Root, Element } from 'hast';
-import { visit } from 'unist-util-visit';
+import type { Root, Element } from "hast";
+
+import { visit } from "unist-util-visit";
 
 /**
  * Rehype plugin: make GFM task list checkboxes interactive by removing
@@ -8,14 +9,15 @@ import { visit } from 'unist-util-visit';
  */
 export function rehypeInteractiveCheckboxes() {
   return (tree: Root) => {
-    visit(tree, 'element', (node: Element) => {
-      if (node.tagName !== 'input') return;
+    visit(tree, "element", (node: Element) => {
+      if (node.tagName !== "input") return;
       const props = node.properties ?? {};
       const type = props.type;
-      if (type !== 'checkbox') return;
+
+      if (type !== "checkbox") return;
       // Remove disabled so the checkbox is clickable; mark for our click handler
       delete props.disabled;
-      (props as Record<string, unknown>)['data-interactive'] = 'true';
+      (props as Record<string, unknown>)["data-interactive"] = "true";
     });
   };
 }

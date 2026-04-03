@@ -1,10 +1,5 @@
 "use client";
-import Header from "@/components/Header";
-
-import { getFileMarkdown, toggleCheckbox } from "@/services/fileservice";
-import { MarkdownContent } from "@/lib/markdown/MarkdownContent";
-import { useAppSettings } from "@/contexts/AppContext";
-import { Button, Spinner } from "@heroui/react";
+import { Button } from "@heroui/react";
 import {
   AlignLeft,
   EyeIcon,
@@ -12,16 +7,20 @@ import {
   PencilIcon,
   WrapText,
 } from "lucide-react";
-
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef, useCallback } from "react";
+
+import Header from "@/app/_components/Header";
+import { getFileMarkdown, toggleCheckbox } from "@/services/fileservice";
+import { MarkdownContent } from "@/lib/markdown/MarkdownContent";
+import { useAppSettings } from "@/contexts/AppContext";
 import { siteConfig } from "@/config/site";
 import { decodePathParam } from "@/utils/stringhelper";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { useSidebarContext } from "@/contexts/SidebarContext";
 
 import "../../../styles/markdown.css";
-import AnimatedContent from "@/components/AnimatedContent";
+import AnimatedContent from "@/app/_components/AnimatedContent";
 
 export default function NotesPage() {
   const params = useParams();
@@ -43,6 +42,7 @@ export default function NotesPage() {
     setLoading(true);
     try {
       const { markdown: md } = await getFileMarkdown(filePath);
+
       setMarkdown(md);
     } catch (error) {
       console.error("Error loading file:", error);
@@ -61,6 +61,7 @@ export default function NotesPage() {
 
     const handleCheckboxClick = async (event: MouseEvent) => {
       const target = event.target as HTMLInputElement;
+
       if (
         target.type === "checkbox" &&
         target.hasAttribute("data-interactive")
@@ -69,11 +70,13 @@ export default function NotesPage() {
 
         // Find the parent list item and extract text
         const listItem = target.closest("li");
+
         if (!listItem) return;
 
         // Get text content of the list item, excluding the checkbox
         const textNode = listItem.cloneNode(true) as HTMLElement;
         const checkbox = textNode.querySelector('input[type="checkbox"]');
+
         if (checkbox) {
           checkbox.remove();
         }
@@ -93,6 +96,7 @@ export default function NotesPage() {
     };
 
     const previewArea = previewAreaRef.current;
+
     previewArea.addEventListener("click", handleCheckboxClick);
 
     return () => {
@@ -104,6 +108,7 @@ export default function NotesPage() {
   useEffect(() => {
     if (filePath) {
       const fileName = filePath.split("/").pop() || filePath;
+
       document.title = `${fileName} - ${siteConfig.name}`;
     } else {
       document.title = siteConfig.name;
@@ -130,11 +135,11 @@ export default function NotesPage() {
             {(isMobile || isWebView) && sidebar && (
               <Button
                 isIconOnly
-                variant="light"
-                size="sm"
-                onPress={() => sidebar.toggleSidebar()}
                 aria-label="Toggle sidebar"
                 className="z-50"
+                size="sm"
+                variant="ghost"
+                onPress={() => sidebar.toggleSidebar()}
               >
                 <PanelLeftIcon className="h-5 w-5" />
               </Button>
@@ -142,10 +147,10 @@ export default function NotesPage() {
             {/* wrap text button */}
             <Button
               isIconOnly
-              variant="light"
-              size="sm"
-              onPress={() => setTextWrap(!textWrap)}
               aria-label={textWrap ? "Disable text wrap" : "Enable text wrap"}
+              size="sm"
+              variant="ghost"
+              onPress={() => setTextWrap(!textWrap)}
             >
               {textWrap ? (
                 <WrapText className="h-5 w-5" />
@@ -155,10 +160,10 @@ export default function NotesPage() {
             </Button>
             <Button
               isIconOnly
-              variant="light"
-              size="sm"
-              onPress={() => router.push(`/notes/edit/${filePath}`)}
               aria-label="Edit"
+              size="sm"
+              variant="ghost"
+              onPress={() => router.push(`/notes/edit/${filePath}`)}
             >
               <PencilIcon className="h-5 w-5" />
             </Button>
@@ -168,17 +173,17 @@ export default function NotesPage() {
 
       <AnimatedContent animationType="blur" isContentLoading={loading}>
         <div className="h-full overflow-y-auto">
-          <div className="h-24 bg-transparent"></div>
+          <div className="h-24 bg-transparent" />
           <div
             ref={previewAreaRef}
-            id="preview-area"
             className={`flex-1 p-4 ${
               textWrap
                 ? "break-words whitespace-pre-wrap"
                 : "whitespace-pre overflow-x-auto no-wrap"
             }`}
+            id="preview-area"
           >
-            <MarkdownContent markdown={markdown} fileIndex={fileIndex} />
+            <MarkdownContent fileIndex={fileIndex} markdown={markdown} />
           </div>
         </div>
       </AnimatedContent>

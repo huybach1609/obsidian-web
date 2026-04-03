@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 export interface UseSidebarOptions {
   /** Sidebar width in pixels (default: 256) */
@@ -14,21 +14,27 @@ export interface UseSidebarReturn {
   isCollapsed: boolean;
   isHoverRevealed: boolean;
   isSidebarVisible: boolean;
-  
+
   // Refs
-  sidebarRef: React.RefObject<HTMLDivElement>;
-  
+  sidebarRef: React.RefObject<HTMLDivElement | null>;
+
   // Framer Motion variants
   sidebarVariants: {
-    expanded: { x: number; transition: { type: string; stiffness: number; damping: number } };
-    collapsed: { x: number; transition: { type: string; stiffness: number; damping: number } };
+    expanded: {
+      x: number;
+      transition: { type: string; stiffness: number; damping: number };
+    };
+    collapsed: {
+      x: number;
+      transition: { type: string; stiffness: number; damping: number };
+    };
   };
-  
+
   // Public actions
   toggle: () => void;
   collapse: () => void;
   expand: () => void;
-  
+
   // Event handlers for sidebar div
   handleMouseEnter: () => void;
   handleMouseLeave: () => void;
@@ -36,7 +42,7 @@ export interface UseSidebarReturn {
 
 /**
  * Custom hook for managing sidebar state and interactions
- * 
+ *
  * Features:
  * - Collapsed/expanded states
  * - Keyboard shortcut (Ctrl/Cmd + \)
@@ -46,18 +52,14 @@ export interface UseSidebarReturn {
 export const useSidebar = (
   isMobile: boolean,
   isWebView: boolean,
-  options: UseSidebarOptions = {}
+  options: UseSidebarOptions = {},
 ): UseSidebarReturn => {
-  const {
-    sidebarWidth = 256,
-    hoverTriggerZone = 12,
-    enabled = true,
-  } = options;
+  const { sidebarWidth = 256, hoverTriggerZone = 12, enabled = true } = options;
 
   // State: collapsed and hover-revealed
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHoverRevealed, setIsHoverRevealed] = useState(false);
-  
+
   // Refs
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -66,10 +68,12 @@ export const useSidebar = (
   const toggle = useCallback(() => {
     setIsCollapsed((prev) => {
       const newValue = !prev;
+
       // If toggling to expanded, clear hover reveal state
       if (newValue === false) {
         setIsHoverRevealed(false);
       }
+
       return newValue;
     });
   }, []);
@@ -93,14 +97,15 @@ export const useSidebar = (
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '\\' && (e.ctrlKey || e.metaKey)) {
+      if (e.key === "\\" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         toggle();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [enabled, isMobile, isWebView, toggle]);
 
   // Hover reveal: When collapsed, detect mouse near left edge (8-12px zone)
@@ -137,17 +142,24 @@ export const useSidebar = (
       }
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
     };
-  }, [enabled, isCollapsed, isHoverRevealed, isMobile, isWebView, hoverTriggerZone]);
+  }, [
+    enabled,
+    isCollapsed,
+    isHoverRevealed,
+    isMobile,
+    isWebView,
+    hoverTriggerZone,
+  ]);
 
   // Click outside to collapse when hover-revealed
   useEffect(() => {
@@ -157,39 +169,45 @@ export const useSidebar = (
 
     const handleClickOutside = (e: MouseEvent) => {
       // If clicked outside the sidebar, collapse the hover-revealed sidebar
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node)
+      ) {
         setIsHoverRevealed(false);
       }
     };
 
     // Use capture phase to catch clicks before they propagate
-    document.addEventListener('click', handleClickOutside, true);
+    document.addEventListener("click", handleClickOutside, true);
 
     return () => {
-      document.removeEventListener('click', handleClickOutside, true);
+      document.removeEventListener("click", handleClickOutside, true);
     };
   }, [enabled, isHoverRevealed, isCollapsed]);
 
   // Framer Motion variants for sidebar animation using translateX
   // Recalculate when sidebarWidth changes
-  const sidebarVariants = useMemo(() => ({
-    expanded: {
-      x: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 300,
-        damping: 30,
+  const sidebarVariants = useMemo(
+    () => ({
+      expanded: {
+        x: 0,
+        transition: {
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+        },
       },
-    },
-    collapsed: {
-      x: -sidebarWidth,
-      transition: {
-        type: 'spring',
-        stiffness: 300,
-        damping: 30,
+      collapsed: {
+        x: -sidebarWidth,
+        transition: {
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+        },
       },
-    },
-  }), [sidebarWidth]);
+    }),
+    [sidebarWidth],
+  );
 
   // Determine if sidebar should be visible (expanded OR hover-revealed)
   const isSidebarVisible = !isCollapsed || isHoverRevealed;
@@ -218,21 +236,20 @@ export const useSidebar = (
     isCollapsed,
     isHoverRevealed,
     isSidebarVisible,
-    
+
     // Refs
     sidebarRef,
-    
+
     // Variants
     sidebarVariants,
-    
+
     // Public actions
     toggle,
     collapse,
     expand,
-    
+
     // Event handlers
     handleMouseEnter,
     handleMouseLeave,
   };
 };
-

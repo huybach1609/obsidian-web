@@ -1,18 +1,20 @@
-import type { FileIndexDto } from '@/types/FileIndexDto';
-import { resolveInternalLink } from './resolveInternalLink';
-import { remarkInternalLinks } from './remarkInternalLinks';
-import type { WikiLinkNode } from './remarkInternalLinks';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkRehype from 'remark-rehype';
-import rehypeSanitize from 'rehype-sanitize';
-import rehypeStringify from 'rehype-stringify';
-import { rehypeInteractiveCheckboxes } from './rehypeInteractiveCheckboxes';
-import type { Element, Text } from 'hast';
-import type { Handler } from 'mdast-util-to-hast';
-import type { State } from 'mdast-util-to-hast';
-import type { Nodes } from 'mdast';
+import type { FileIndexDto } from "@/types/FileIndexDto";
+import type { WikiLinkNode } from "./remarkInternalLinks";
+import type { Element, Text } from "hast";
+import type { Handler } from "mdast-util-to-hast";
+import type { State } from "mdast-util-to-hast";
+import type { Nodes } from "mdast";
+
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkGfm from "remark-gfm";
+import remarkRehype from "remark-rehype";
+import rehypeSanitize from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
+
+import { rehypeInteractiveCheckboxes } from "./rehypeInteractiveCheckboxes";
+import { remarkInternalLinks } from "./remarkInternalLinks";
+import { resolveInternalLink } from "./resolveInternalLink";
 
 /**
  * Create a rehype handler for wikiLink nodes that resolves internal links
@@ -24,27 +26,31 @@ function createWikiLinkHandler(fileIndex: FileIndexDto[]): Handler {
     const resolved = resolveInternalLink(wiki.value, fileIndex);
     const displayText = wiki.alias ?? wiki.value;
 
-    const textChild: Text = { type: 'text', value: displayText };
+    const textChild: Text = { type: "text", value: displayText };
 
     if (resolved) {
       const href = `/notes/${resolved}`;
       const result: Element = {
-        type: 'element',
-        tagName: 'a',
-        properties: { href, className: ['internal-link'] },
+        type: "element",
+        tagName: "a",
+        properties: { href, className: ["internal-link"] },
         children: [textChild],
       };
+
       state.patch(node as Nodes, result);
+
       return state.applyData(node as Nodes, result) as Element;
     }
 
     const result: Element = {
-      type: 'element',
-      tagName: 'span',
-      properties: { className: ['internal-link', 'unresolved'] },
+      type: "element",
+      tagName: "span",
+      properties: { className: ["internal-link", "unresolved"] },
       children: [textChild],
     };
+
     state.patch(node as Nodes, result);
+
     return state.applyData(node as Nodes, result) as Element;
   };
 }
@@ -57,7 +63,7 @@ function createWikiLinkHandler(fileIndex: FileIndexDto[]): Handler {
  */
 export async function renderMarkdown(
   markdown: string,
-  fileIndex: FileIndexDto[] = []
+  fileIndex: FileIndexDto[] = [],
 ): Promise<string> {
   const handlers: Record<string, Handler> = {
     wikiLink: createWikiLinkHandler(fileIndex),
@@ -74,5 +80,6 @@ export async function renderMarkdown(
 
   const file = await processor.process(markdown);
   const html = String(file);
+
   return `<div class="markdown-body">${html}</div>`;
 }

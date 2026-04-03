@@ -1,42 +1,86 @@
-/* Markdown view theme – aligned with tailwind.config.js (HeroUI light/dark) */
 
-:root {
-  /* Light theme – tailwind themes.light.colors */
-  --markdown-bg: #fcfcf7;
-  --markdown-text: #03071e;
-  --markdown-text-muted: #333333;
-  --markdown-h1: #d32f2f;       /* primary */
-  --markdown-h2: #ff7043;       /* secondary */
-  --markdown-h3: #d32f2f;
-  --markdown-border: #e0e0e0;
-  --markdown-code-bg: #ecd6c0; /* codeBackground */
-  --markdown-code-text: #333333; /* code */
-  --markdown-quote-border: #bdbdbd; /* quoteBorder */
-  --markdown-quote-text: #666666;   /* quote */
-  --markdown-link: #d32f2f;        /* primary – external & internal resolved */
-  --markdown-link-hover: #b71c1c;
-  --markdown-link-unresolved: #666666; /* muted – internal unresolved */
-  --markdown-warning: #ff9800;
-  --markdown-error: #c62828;
+/* Preview area container constraints */
+#preview-area {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
 }
 
-[data-theme="dark"],
-.dark {
-  /* Dark theme – tailwind themes.dark.colors */
-  --markdown-bg: #1e1e1e;
-  --markdown-text: #f8f8f2;       /* foreground */
-  --markdown-text-muted: #cccccc; /* foreground1 */
-  --markdown-h1: #ff6961;         /* primary */
-  --markdown-h2: #ffa07a;         /* secondary */
-  --markdown-h3: #ff6961;
-  --markdown-border: #444444;
-  --markdown-code-bg: #333333;    /* codeBackground */
-  --markdown-code-text: #f8f8f2; /* code */
-  --markdown-quote-border: #555555;
-  --markdown-quote-text: #cccccc;
-  --markdown-link: #ff6961;
-  --markdown-link-hover: #ff8a80;
-  --markdown-link-unresolved: #888888;
-  --markdown-warning: #ffb74d;
-  --markdown-error: #ef5350;
+/* Preview area code block wrapping - Default (wrap mode) */
+#preview-area pre {
+  white-space: pre-wrap !important;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  overflow-x: auto;
 }
+
+#preview-area code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+#preview-area pre code {
+  white-space: pre-wrap !important;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: block;
+}
+
+/* No-wrap mode - when textWrap is false */
+#preview-area.no-wrap {
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  min-width: 0;
+}
+
+#preview-area.no-wrap pre {
+  white-space: pre !important;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  display: block;
+  margin: 0;
+  padding: 1em;
+}
+
+#preview-area.no-wrap code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  white-space: pre;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+#preview-area.no-wrap pre code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  white-space: pre !important;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  display: block;
+}
+
+/* Ensure all content respects container boundaries in no-wrap mode */
+#preview-area.no-wrap > * {
+  min-width: 0;
+}
+
+#preview-area.no-wrap table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+

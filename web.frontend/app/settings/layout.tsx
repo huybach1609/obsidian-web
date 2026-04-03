@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { LeftSideBarTop } from "@/components/Bar/LeftSideBarTop";
-import { useAppSettings } from "@/contexts/AppContext";
-import { usePlatform } from "@/contexts/PlatformContext";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useSidebar } from "@/hook/useSidebar";
 import { twMerge } from "tailwind-merge";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { SettingSideBarBottom } from "@/components/Bar/SettingSideBarBottom";
+
+import { LeftSideBarTop } from "@/app/_components/Bar/LeftSideBarTop";
+import { useAppSettings } from "@/contexts/AppContext";
+import { usePlatform } from "@/contexts/PlatformContext";
+import { useSidebar } from "@/hook/useSidebar";
+import { SettingSideBarBottom } from "@/app/_components/Bar/SettingSideBarBottom";
 
 const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -23,9 +24,11 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
     setIsHydrated(true);
-    const saved = localStorage.getItem('sidebar-width');
+    const saved = localStorage.getItem("sidebar-width");
+
     if (saved) {
       const parsed = parseInt(saved, 10);
+
       if (!isNaN(parsed) && parsed >= 200 && parsed <= 600) {
         setSidebarWidth(parsed);
       }
@@ -35,7 +38,7 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   // Save to localStorage when width changes (only after hydration)
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem('sidebar-width', sidebarWidth.toString());
+      localStorage.setItem("sidebar-width", sidebarWidth.toString());
     }
   }, [sidebarWidth, isHydrated]);
 
@@ -46,7 +49,7 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
 
   const handleLogout = () => {
     setAccessToken(null);
-    router.push('/login');
+    router.push("/login");
   };
 
   // Use sidebar hook for all sidebar logic
@@ -68,32 +71,40 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
     setIsResizing(true);
     resizeStartX.current = e.clientX;
     resizeStartWidth.current = sidebarWidth;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
   };
 
-  const handleResizeMove = useCallback((e: MouseEvent) => {
-    if (!isResizing) return;
+  const handleResizeMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing) return;
 
-    const diff = e.clientX - resizeStartX.current;
-    const newWidth = Math.max(200, Math.min(600, resizeStartWidth.current + diff));
-    setSidebarWidth(newWidth);
-  }, [isResizing]);
+      const diff = e.clientX - resizeStartX.current;
+      const newWidth = Math.max(
+        200,
+        Math.min(600, resizeStartWidth.current + diff),
+      );
+
+      setSidebarWidth(newWidth);
+    },
+    [isResizing],
+  );
 
   const handleResizeEnd = useCallback(() => {
     setIsResizing(false);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
   }, []);
 
   // Add global mouse event listeners for resizing
   useEffect(() => {
     if (isResizing) {
-      document.addEventListener('mousemove', handleResizeMove);
-      document.addEventListener('mouseup', handleResizeEnd);
+      document.addEventListener("mousemove", handleResizeMove);
+      document.addEventListener("mouseup", handleResizeEnd);
+
       return () => {
-        document.removeEventListener('mousemove', handleResizeMove);
-        document.removeEventListener('mouseup', handleResizeEnd);
+        document.removeEventListener("mousemove", handleResizeMove);
+        document.removeEventListener("mouseup", handleResizeEnd);
       };
     }
   }, [isResizing, handleResizeMove, handleResizeEnd]);
@@ -103,51 +114,54 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
     return (
       <div className="flex flex-col h-screen bg-background">
         <LeftSideBarTop handleLogout={handleLogout} isMobile={true} />
-        <div className="flex-1 overflow-hidden">
-          {children}
-        </div>
+        <div className="flex-1 overflow-hidden">{children}</div>
       </div>
     );
   }
 
   // Desktop: show sidebar and content with animation
   return (
-    <div className={twMerge("flex h-screen bg-background text-foreground relative",
-      isCollapsed ? "flex-row" : "flex-col")}>
-      
+    <div
+      className={twMerge(
+        "flex h-screen bg-background text-foreground relative",
+        isCollapsed ? "flex-row" : "flex-col",
+      )}
+    >
       {/* Left Sidebar - Animated with Framer Motion, remains mounted when collapsed */}
       <motion.div
         ref={sidebarRef}
+        animate={isSidebarVisible ? "expanded" : "collapsed"}
         className={twMerge(
           "bg-background flex flex-col fixed left-0 z-40",
           isCollapsed
             ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
-            : "top-0 bottom-0"
+            : "top-0 bottom-0",
         )}
+        initial={false}
         style={{ width: sidebarWidth }}
         variants={sidebarVariants}
-        animate={isSidebarVisible ? 'expanded' : 'collapsed'}
-        initial={false}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <LeftSideBarTop
           handleLogout={handleLogout}
+          isCollapsed={isCollapsed}
           isMobile={false}
           onToggleSidebar={toggleSidebar}
-          isCollapsed={isCollapsed}
         />
         <SettingSideBarBottom />
 
         {/* Resize Handle */}
         {!isCollapsed && (
-          <div
-            className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-primary/30 transition-all z-50 group"
+          <button
+            type="button"
+            aria-label="Resize sidebar"
+            className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-accent/30 transition-all z-50 group"
+            style={{ touchAction: "none" }}
             onMouseDown={handleResizeStart}
-            style={{ touchAction: 'none' }}
           >
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+          </button>
         )}
       </motion.div>
 
@@ -158,7 +172,7 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
           marginLeft: isSidebarVisible ? sidebarWidth : 0,
         }}
         transition={{
-          type: 'spring',
+          type: "spring",
           stiffness: 100,
           damping: 70,
         }}

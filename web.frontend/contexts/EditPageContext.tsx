@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface EditPageContextType {
   hasChanges: boolean;
@@ -13,7 +13,9 @@ interface EditPageContextType {
   setIsContentLoading: (value: boolean) => void;
 }
 
-const EditPageContext = createContext<EditPageContextType | undefined>(undefined);
+const EditPageContext = createContext<EditPageContextType | undefined>(
+  undefined,
+);
 
 export function EditPageProvider({ children }: { children: ReactNode }) {
   const [hasChanges, setHasChanges] = useState(false);
@@ -41,9 +43,10 @@ export function EditPageProvider({ children }: { children: ReactNode }) {
 
 export function useEditPage() {
   const context = useContext(EditPageContext);
+
   if (context === undefined) {
-    throw new Error('useEditPage must be used within an EditPageProvider');
+    throw new Error("useEditPage must be used within an EditPageProvider");
   }
+
   return context;
 }
-

@@ -21,4 +21,3 @@ export const SidebarProvider = ({
 );
 
 export const useSidebarContext = () => useContext(SidebarContext);
-

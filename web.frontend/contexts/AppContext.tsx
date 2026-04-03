@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -7,14 +7,15 @@ import {
   useEffect,
   useRef,
   useState,
-} from 'react';
-import { useTheme } from 'next-themes';
-import { FileIndexDto } from '@/types/FileIndexDto';
-import { VimConfig, defaultVimConfig } from '@/types/vimConfig';
-import { useVimConfig } from '@/hook/useVimConfig';
-import { clearVimConfigFromStorage } from '@/services/vimconfigservice';
-import axios from 'axios';
-import { deleteCookie, getCookie, setCookie } from '@/utils/cookie';
+} from "react";
+import { useTheme } from "next-themes";
+import axios from "axios";
+
+import { FileIndexDto } from "@/types/FileIndexDto";
+import { VimConfig, defaultVimConfig } from "@/types/vimConfig";
+import { useVimConfig } from "@/hook/useVimConfig";
+import { clearVimConfigFromStorage } from "@/services/vimconfigservice";
+import { deleteCookie, getCookie, setCookie } from "@/utils/cookie";
 import {
   THEME_COOKIE_KEY,
   EDIT_MODE_COOKIE_KEY,
@@ -22,9 +23,11 @@ import {
   TOKEN_COOKIE_KEY,
   LAST_VISITED_PATH_COOKIE_KEY,
   COOKIE_MAX_AGE_DAYS,
-} from '@/lib/constants';
+} from "@/lib/constants";
 
-type ThemeMode = 'light' | 'dark';
+const THEME_MODES = ["obsidian", "obsidian-dark"] as const;
+
+type ThemeMode = (typeof THEME_MODES)[number];
 
 type AppContextValue = {
   theme: ThemeMode;
@@ -44,7 +47,7 @@ type AppContextValue = {
 };
 
 const defaultValue: AppContextValue = {
-  theme: 'light',
+  theme: "obsidian-dark",
   accessToken: null,
   editMode: false,
   vimMode: false,
@@ -63,7 +66,7 @@ const defaultValue: AppContextValue = {
 const AppContext = createContext<AppContextValue>(defaultValue);
 
 function isThemeMode(value: string): value is ThemeMode {
-  return value === 'light' || value === 'dark';
+  return (THEME_MODES as readonly string[]).includes(value);
 }
 
 export function getTokenFromCookie() {
@@ -76,13 +79,24 @@ export function getLastVisitedPathFromCookie() {
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme, setTheme } = useTheme();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>("obsidian-dark");
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [fileIndex, setFileIndexState] = useState<FileIndexDto[]>([]);
   const [editMode, setEditModeState] = useState<boolean>(false);
   const [vimMode, setVimModeState] = useState<boolean>(false);
-  const [lastVisitedPath, setLastVisitedPathState] = useState<string | null>(null);
-  
+  const [lastVisitedPath, setLastVisitedPathState] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    // Tailwind's `dark:` utilities require the `dark` class on <html>.
+    if (typeof document === "undefined") return;
+    document.documentElement.classList.toggle(
+      "dark",
+      themeMode === "obsidian-dark",
+    );
+  }, [themeMode]);
+
   // Use the useVimConfig hook for vim configuration management
   const { config: vimConfig, updateConfig: updateVimConfig } = useVimConfig();
 
@@ -96,6 +110,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     initializedRef.current = true;
 
     const cookieTheme = getCookie(THEME_COOKIE_KEY);
+
     if (cookieTheme && isThemeMode(cookieTheme)) {
       setThemeModeState(cookieTheme);
       setTheme(cookieTheme);
@@ -105,23 +120,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const cookieToken = getCookie(TOKEN_COOKIE_KEY);
+
     if (cookieToken) {
       setAccessTokenState(cookieToken);
     }
 
     const cookieEditMode = getCookie(EDIT_MODE_COOKIE_KEY);
+
     if (cookieEditMode != null) {
-      setEditModeState(cookieEditMode === 'true');
+      setEditModeState(cookieEditMode === "true");
     }
 
     const cookieVimMode = getCookie(VIM_MODE_COOKIE_KEY);
+
     if (cookieVimMode != null) {
-      setVimModeState(cookieVimMode === 'true');
+      setVimModeState(cookieVimMode === "true");
     }
 
     // Vim config is now managed by useVimConfig hook (stale-while-revalidate)
 
     const cookieLastVisitedPath = getCookie(LAST_VISITED_PATH_COOKIE_KEY);
+
     if (cookieLastVisitedPath) {
       setLastVisitedPathState(cookieLastVisitedPath);
     }
@@ -134,14 +153,16 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (syncFromProviderRef.current) {
       syncFromProviderRef.current = false;
+
       return;
     }
 
-    setThemeModeState(prev => {
+    setThemeModeState((prev) => {
       if (prev === resolvedTheme) {
         return prev;
       }
       setCookie(THEME_COOKIE_KEY, resolvedTheme, COOKIE_MAX_AGE_DAYS);
+
       return resolvedTheme;
     });
   }, [resolvedTheme]);
@@ -149,10 +170,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   // auto load file index from backend cache
   useEffect(() => {
     const fetchFileIndex = async () => {
-      const response = await axios.get('/file-index');
+      const response = await axios.get("/file-index");
+
       // console.log('response', response.data);
       setFileIndexState(response.data);
-    }
+    };
+
     if (getTokenFromCookie()) {
       fetchFileIndex();
     }
@@ -179,7 +202,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearAppSettings = useCallback(() => {
     syncFromProviderRef.current = true;
-    setThemeModeState('light');
+    setThemeModeState("obsidian-dark");
     deleteCookie(THEME_COOKIE_KEY);
     deleteCookie(TOKEN_COOKIE_KEY);
     setAccessTokenState(null);
@@ -190,7 +213,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     clearVimConfigFromStorage();
     deleteCookie(LAST_VISITED_PATH_COOKIE_KEY);
     setLastVisitedPathState(null);
-    setTheme('light');
+    setTheme("obsidian-dark");
   }, [setTheme]);
 
   const updateEditMode = useCallback((mode: boolean) => {
@@ -239,4 +262,3 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useAppSettings = () => useContext(AppContext);
-

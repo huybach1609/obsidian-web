@@ -1,0 +1,172 @@
+/*
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes base variables from variables.css
+ * @see https://heroui.com/docs/react/getting-started/theming
+ */
+/*
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes base variables from variables.css
+ * @see https://heroui.com/docs/react/getting-started/theming
+ */
+
+ /*
+ * HeroUI Theme Customization
+ * Add this to your global.css after importing @heroui/styles
+ * Only includes base variables from variables.css
+ * @see https://heroui.com/docs/react/getting-started/theming
+ */
+
+@layer base {
+    [data-theme="obsidian"] {
+        color-scheme: light;
+        /* Theme Colors (Light Mode) */
+        --accent: oklch(48.47% 0.1826 270.88);
+        --accent-foreground: oklch(99.11% 0 0);
+        --background: oklch(97.02% 0.0164 270.88);
+        --border: oklch(90.00% 0.0164 270.88);
+        --danger: oklch(65.32% 0.2404 27.79);
+        --danger-foreground: oklch(99.11% 0 0);
+        --default: oklch(94.00% 0.0164 270.88);
+        --default-foreground: oklch(21.03% 0.0059 270.88);
+        --field-background: oklch(100.00% 0.0082 270.88);
+        --field-foreground: oklch(21.03% 0.0164 270.88);
+        --field-placeholder: oklch(55.17% 0.0328 270.88);
+        --focus: oklch(48.47% 0.1826 270.88);
+        --foreground: oklch(38.00% 0.1826 270.88);
+        --muted: oklch(55.17% 0.0328 270.88);
+        --overlay: oklch(100.00% 0.0049 270.88);
+        --overlay-foreground: oklch(21.03% 0.0164 270.88);
+        --scrollbar: oklch(87.10% 0.0164 270.88);
+        --segment: oklch(100.00% 0.0164 270.88);
+        --segment-foreground: oklch(21.03% 0.0164 270.88);
+        --separator: oklch(92.00% 0.0164 270.88);
+        --success: oklch(73.29% 0.1999 152.86);
+        --success-foreground: oklch(21.03% 0.0059 152.86);
+        --surface: oklch(100.00% 0.0082 270.88);
+        --surface-foreground: oklch(21.03% 0.0164 270.88);
+        --surface-secondary: oklch(95.24% 0.0131 270.88);
+        --surface-secondary-foreground: oklch(21.03% 0.0164 270.88);
+        --surface-tertiary: oklch(93.73% 0.0131 270.88);
+        --surface-tertiary-foreground: oklch(21.03% 0.0164 270.88);
+        --warning: oklch(78.19% 0.1637 74.38);
+        --warning-foreground: oklch(21.03% 0.0059 74.38);
+
+        /* Border Radius */
+        --radius: 0.75rem;
+        --field-radius: 1rem;
+
+        /* Font Family */
+        /* Make sure to load Figtree font in your app */
+        --font-sans: var(--font-figtree);
+
+        /* Markdown variables — derived from theme hue 270.88 */
+        /* bg: same hue as --surface-secondary, slightly warmer L */
+        --markdown-bg:  oklch(97.02% 0.0164 270.88);
+        /* text: matches --foreground exactly */
+        --markdown-text: oklch(21.03% 0.0164 270.88);
+        /* h1: accent hue, full chroma, darker L for strong presence */
+        --markdown-h1: oklch(38.00% 0.1826 270.88);
+        /* h2: accent hue, slightly lighter and less chroma */
+        --markdown-h2: oklch(52.00% 0.1400 270.88);
+        /* border: matches --border exactly */
+        --markdown-border: oklch(90.00% 0.0164 270.88);
+        /* code-bg: matches --surface-tertiary, slightly more chroma */
+        --markdown-code-bg: oklch(93.73% 0.0246 270.88);
+        /* code-text: matches --foreground */
+        --markdown-code-text: oklch(21.03% 0.0164 270.88);
+        /* quote-border: matches --scrollbar */
+        --markdown-quote-border: oklch(87.10% 0.0164 270.88);
+        /* quote-text: matches --muted */
+        --markdown-quote-text: oklch(55.17% 0.0328 270.88);
+
+        /* Syntax tokens — semantic hue shifts within the obsidian system */
+        /* keyword: accent color, full strength */
+        --token-keyword: oklch(48.47% 0.1826 270.88);
+        /* string: success hue (152.86), darkened for light bg */
+        --token-string: oklch(45.00% 0.1400 152.86);
+        /* number: warning hue (74.38), darkened for light bg */
+        --token-number: oklch(50.00% 0.1400 74.38);
+        /* comment: matches --muted exactly */
+        --token-comment: oklch(55.17% 0.0328 270.88);
+        /* def: deeper accent, more chroma */
+        --token-def: oklch(35.00% 0.2000 270.88);
+        /* variable: matches --foreground */
+        --token-variable: oklch(21.03% 0.0164 270.88);
+    }
+
+    [data-theme="obsidian-dark"] {
+        color-scheme: dark;
+        /* Theme Colors (Dark Mode) */
+        --accent: oklch(48.47% 0.1826 270.88);
+        --accent-foreground: oklch(99.11% 0 0);
+        --background: oklch(12.00% 0.0164 270.88);
+        --border: oklch(28.00% 0.0164 270.88);
+        --danger: oklch(59.40% 0.2032 26.68);
+        --danger-foreground: oklch(99.11% 0 0);
+        --default: oklch(27.40% 0.0164 270.88);
+        --default-foreground: oklch(99.11% 0 0);
+        --field-background: oklch(21.03% 0.0328 270.88);
+        --field-foreground: oklch(99.11% 0.0164 270.88);
+        --field-placeholder: oklch(70.50% 0.0328 270.88);
+        --focus: oklch(48.47% 0.1826 270.88);
+        --foreground: oklch(72.00% 0.1826 270.88);
+        --muted: oklch(70.50% 0.0328 270.88);
+        --overlay: oklch(21.03% 0.0328 270.88);
+        --overlay-foreground: oklch(99.11% 0.0164 270.88);
+        --scrollbar: oklch(70.50% 0.0164 270.88);
+        --segment: oklch(39.64% 0.0164 270.88);
+        --segment-foreground: oklch(99.11% 0.0164 270.88);
+        --separator: oklch(25.00% 0.0164 270.88);
+        --success: oklch(73.29% 0.1999 152.86);
+        --success-foreground: oklch(21.03% 0.0059 152.86);
+        --surface: oklch(21.03% 0.0328 270.88);
+        --surface-foreground: oklch(99.11% 0.0164 270.88);
+        --surface-secondary: oklch(25.70% 0.0246 270.88);
+        --surface-secondary-foreground: oklch(99.11% 0.0164 270.88);
+        --surface-tertiary: oklch(27.21% 0.0246 270.88);
+        --surface-tertiary-foreground: oklch(99.11% 0.0164 270.88);
+        --warning: oklch(82.03% 0.1434 78.39);
+        --warning-foreground: oklch(21.03% 0.0059 78.39);
+
+        /* Match light theme so portaled UI (e.g. modals) always resolves `--radius`. */
+        --radius: 0.75rem;
+        --field-radius: 1rem;
+
+        /* Markdown variables — derived from dark theme hue 270.88 */
+        /* bg: just above --surface, same hue */
+        --markdown-bg: var(--background);
+
+        /* text: matches --foreground exactly */
+        --markdown-text: oklch(99.11% 0.0164 270.88);
+        /* h1: accent hue, bright lightness for dark bg */
+        --markdown-h1: oklch(72.00% 0.1826 270.88);
+        /* h2: accent hue, slightly less bright */
+        --markdown-h2: oklch(62.00% 0.1400 270.88);
+        /* border: matches --border exactly */
+        --markdown-border: oklch(28.00% 0.0164 270.88);
+        /* code-bg: matches --surface-tertiary */
+        --markdown-code-bg: oklch(27.21% 0.0246 270.88);
+        /* code-text: matches --foreground */
+        --markdown-code-text: oklch(99.11% 0.0164 270.88);
+        /* quote-border: matches --separator */
+        --markdown-quote-border: oklch(25.00% 0.0164 270.88);
+        /* quote-text: matches --muted */
+        --markdown-quote-text: oklch(70.50% 0.0328 270.88);
+
+        /* Syntax tokens — dark variants, same hue logic as light */
+        /* keyword: accent, boosted lightness for dark bg */
+        --token-keyword: oklch(72.00% 0.1826 270.88);
+        /* string: --success lightness/chroma, same hue 152.86 */
+        --token-string: oklch(73.29% 0.1999 152.86);
+        /* number: matches --warning exactly */
+        --token-number: oklch(82.03% 0.1434 78.39);
+        /* comment: matches --muted exactly */
+        --token-comment: oklch(70.50% 0.0328 270.88);
+        /* def: accent hue, higher L than keyword */
+        --token-def: oklch(78.00% 0.1400 270.88);
+        /* variable: matches --foreground */
+        --token-variable: oklch(99.11% 0.0164 270.88);
+    }
+}

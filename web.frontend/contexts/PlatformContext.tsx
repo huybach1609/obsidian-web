@@ -1,8 +1,9 @@
 // contexts/PlatformContext.tsx
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { isWebView, isMobileDevice } from '@/utils/platform';
+import { createContext, useContext, useEffect, useState } from "react";
+
+import { isWebView, isMobileDevice } from "@/utils/platform";
 
 type PlatformContextType = {
   isWebView: boolean;
@@ -16,7 +17,11 @@ const PlatformContext = createContext<PlatformContextType>({
   isWeb: true,
 });
 
-export const PlatformProvider = ({ children }: { children: React.ReactNode }) => {
+export const PlatformProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [platform, setPlatform] = useState<PlatformContextType>({
     isWebView: false,
     isMobile: false,
@@ -26,7 +31,7 @@ export const PlatformProvider = ({ children }: { children: React.ReactNode }) =>
   useEffect(() => {
     const webView = isWebView();
     const mobile = isMobileDevice();
-    
+
     setPlatform({
       isWebView: webView,
       isMobile: mobile,

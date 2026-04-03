@@ -1,11 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { VimConfig, defaultVimConfig } from '@/types/vimConfig';
-import { 
-  getVimConfig, 
-  saveVimConfig, 
-  getVimConfigFromStorage, 
-  saveVimConfigToStorage 
-} from '@/services/vimconfigservice';
+import { useState, useEffect, useCallback, useRef } from "react";
+
+import { VimConfig, defaultVimConfig } from "@/types/vimConfig";
+import { getCookie } from "@/utils/cookie";
+import { TOKEN_COOKIE_KEY } from "@/lib/constants";
+import {
+  getVimConfig,
+  saveVimConfig,
+  getVimConfigFromStorage,
+  saveVimConfigToStorage,
+} from "@/services/vimconfigservice";
 
 interface UseVimConfigReturn {
   config: VimConfig;
@@ -18,12 +21,12 @@ interface UseVimConfigReturn {
 
 /**
  * Custom hook for managing Vim configuration with Stale-While-Revalidate strategy
- * 
+ *
  * On Load:
  * - Immediately loads from localStorage (if available) for instant UI
  * - Simultaneously fetches from API in background
  * - Compares timestamps and updates if server version is newer
- * 
+ *
  * On Save:
  * - Updates state and localStorage immediately (Optimistic UI)
  * - Sends to backend via POST
@@ -40,15 +43,24 @@ export function useVimConfig(): UseVimConfigReturn {
   // Load config on mount with stale-while-revalidate
   useEffect(() => {
     const loadConfig = async () => {
-      
       setIsLoading(true);
       setError(null);
 
       // Step 1: Load from localStorage immediately (stale data for instant UI)
       const storedConfig = getVimConfigFromStorage();
+
       if (storedConfig) {
         setConfig(storedConfig);
         setIsLoading(false); // UI can render immediately
+      }
+
+      // If user isn't authenticated yet, don't call protected endpoint.
+      const token = getCookie(TOKEN_COOKIE_KEY);
+      if (!token) {
+        setIsLoading(false);
+        isInitialLoadRef.current = false;
+
+        return;
       }
 
       // Step 2: Fetch from API in background (revalidate)
@@ -60,14 +72,14 @@ export function useVimConfig(): UseVimConfigReturn {
         abortControllerRef.current = new AbortController();
 
         const serverConfig = await getVimConfig();
-        
+
         // Step 3: Compare timestamps and update if server is newer
         if (storedConfig) {
-          const storedUpdatedAt = storedConfig.updatedAt 
-            ? new Date(storedConfig.updatedAt).getTime() 
+          const storedUpdatedAt = storedConfig.updatedAt
+            ? new Date(storedConfig.updatedAt).getTime()
             : 0;
-          const serverUpdatedAt = serverConfig.updatedAt 
-            ? new Date(serverConfig.updatedAt).getTime() 
+          const serverUpdatedAt = serverConfig.updatedAt
+            ? new Date(serverConfig.updatedAt).getTime()
             : 0;
 
           // If server version is newer, update both state and storage
@@ -83,11 +95,12 @@ export function useVimConfig(): UseVimConfigReturn {
       } catch (err) {
         // If API fails but we have stored config, keep using it
         if (!storedConfig) {
-          setError(err instanceof Error ? err : new Error('Failed to load config'));
+          setError(
+            err instanceof Error ? err : new Error("Failed to load config"),
+          );
           setConfig(defaultVimConfig);
         }
-        // If we have stored config, silently continue using it
-        console.warn('Failed to fetch vim config from server, using cached version:', err);
+        // If we have stored config, silently continue using it.
       } finally {
         setIsLoading(false);
         isInitialLoadRef.current = false;
@@ -114,16 +127,22 @@ export function useVimConfig(): UseVimConfigReturn {
     saveVimConfigToStorage(newConfig);
 
     try {
+      const token = getCookie(TOKEN_COOKIE_KEY);
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
       // Send to backend
       const serverConfig = await saveVimConfig(newConfig);
-      
+
       // Update with server response (includes updated timestamps)
       setConfig(serverConfig);
       saveVimConfigToStorage(serverConfig);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to save config'));
+      setError(err instanceof Error ? err : new Error("Failed to save config"));
       // Revert to previous config on error
       const storedConfig = getVimConfigFromStorage();
+
       if (storedConfig) {
         setConfig(storedConfig);
       }
@@ -139,16 +158,24 @@ export function useVimConfig(): UseVimConfigReturn {
     setError(null);
 
     try {
+      const token = getCookie(TOKEN_COOKIE_KEY);
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       abortControllerRef.current = new AbortController();
 
       const serverConfig = await getVimConfig();
+
       setConfig(serverConfig);
       saveVimConfigToStorage(serverConfig);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to refresh config'));
+      setError(
+        err instanceof Error ? err : new Error("Failed to refresh config"),
+      );
       throw err;
     } finally {
       setIsLoading(false);

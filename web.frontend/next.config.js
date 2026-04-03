@@ -1,6 +1,44 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Force a single physical copy of @codemirror/state so extension instanceof checks work (avoids duplicate nested installs). */
+const codemirrorStateRoot = path.resolve(__dirname, 'node_modules/@codemirror/state');
+/** Same for React Aria — duplicate @react-aria/interactions breaks PressResponder context (react-spectrum#5647). */
+const reactAriaInteractionsRoot = path.resolve(
+  __dirname,
+  'node_modules/@react-aria/interactions',
+);
+const reactAriaUtilsRoot = path.resolve(__dirname, 'node_modules/@react-aria/utils');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+
+  // Turbopack: use project-relative paths only (absolute paths break resolution).
+  turbopack: {
+    resolveAlias: {
+      // Turbopack uses its own resolver (webpack aliases won't apply in dev),
+      // so we must force a single physical @codemirror/state copy here too.
+      '@codemirror/state': './node_modules/@codemirror/state',
+      // @codemirror/view indirectly depends on @codemirror/state and participates in
+      // extension identity checks, so alias it as well for extra safety.
+      '@codemirror/view': './node_modules/@codemirror/view',
+      '@react-aria/interactions': './node_modules/@react-aria/interactions',
+      '@react-aria/utils': './node_modules/@react-aria/utils',
+    },
+  },
+
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@codemirror/state': codemirrorStateRoot,
+      '@react-aria/interactions': reactAriaInteractionsRoot,
+      '@react-aria/utils': reactAriaUtilsRoot,
+    };
+    return config;
+  },
 
   ...(process.env.NODE_ENV === 'production' ? {
     async rewrites() {

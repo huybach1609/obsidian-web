@@ -1,20 +1,23 @@
 // hooks/useFileSearch.ts
-import Fuse from 'fuse.js';
-import { useMemo, useState } from 'react';
-import type { FileIndexDto } from '@/types/FileIndexDto';
-import { useAppSettings } from '@/contexts/AppContext';
+import type { FileIndexDto } from "@/types/FileIndexDto";
+
+import Fuse from "fuse.js";
+import { useMemo, useState } from "react";
+
+import { useAppSettings } from "@/contexts/AppContext";
 
 export const useFileSearch = () => {
   const { fileIndex } = useAppSettings();
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   // 1. Cấu hình Fuse.js dựa trên fileIndex từ AppContext
   const fuse = useMemo(() => {
     if (!fileIndex || fileIndex.length === 0) return null;
+
     return new Fuse<FileIndexDto>(fileIndex, {
-      keys: ['fileName', 'filePath'], 
-      threshold: 0.5, 
+      keys: ["fileName", "filePath"],
+      threshold: 0.5,
     });
   }, [fileIndex]);
 
@@ -26,5 +29,10 @@ export const useFileSearch = () => {
     return fuse.search(query).map((result) => result.item);
   }, [query, fuse]);
 
-  return { query, setQuery, results, isLoading: !fileIndex || fileIndex.length === 0 };
+  return {
+    query,
+    setQuery,
+    results,
+    isLoading: !fileIndex || fileIndex.length === 0,
+  };
 };

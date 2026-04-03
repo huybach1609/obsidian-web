@@ -1,4 +1,4 @@
-export type VimMode = 'insert' | 'normal';
+export type VimMode = "insert" | "normal";
 
 export interface VimKeyMapping {
   keys: string;

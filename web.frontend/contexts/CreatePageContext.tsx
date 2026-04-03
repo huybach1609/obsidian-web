@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface CreatePageContextType {
   hasChanges: boolean;
@@ -19,7 +19,9 @@ interface CreatePageContextType {
   setContent: (value: string) => void;
 }
 
-const CreatePageContext = createContext<CreatePageContextType | undefined>(undefined);
+const CreatePageContext = createContext<CreatePageContextType | undefined>(
+  undefined,
+);
 
 export function CreatePageProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -57,9 +59,10 @@ export function CreatePageProvider({ children }: { children: ReactNode }) {
 
 export function useCreatePage() {
   const context = useContext(CreatePageContext);
+
   if (context === undefined) {
-    throw new Error('useCreatePage must be used within an CreatePageProvider');
+    throw new Error("useCreatePage must be used within an CreatePageProvider");
   }
+
   return context;
 }
-

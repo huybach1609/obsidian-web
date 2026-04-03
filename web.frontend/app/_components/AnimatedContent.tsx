@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useEditPage } from "@/contexts/EditPageContext";
 import { useEffect, useState, useRef } from "react";
+
 import { animations, AnimationType } from "@/utils/animations";
 
 export default function AnimatedContent({
   children,
-  animationType = 'fade',
+  animationType = "fade",
   isContentLoading = false,
 }: {
   children: React.ReactNode;
@@ -40,16 +40,17 @@ export default function AnimatedContent({
     <AnimatePresence mode="wait">
       <motion.div
         key={animationKey}
-        initial={selectedAnimation.initial}
-        animate={shouldAnimate ? selectedAnimation.animate : selectedAnimation.initial}
-        exit={selectedAnimation.exit}
-        transition={selectedAnimation.transition}
+        animate={
+          shouldAnimate ? selectedAnimation.animate : selectedAnimation.initial
+        }
         className="flex-1 overflow-hidden"
-        style={{ transformStyle: 'preserve-3d' }}
+        exit={selectedAnimation.exit}
+        initial={selectedAnimation.initial}
+        style={{ transformStyle: "preserve-3d" }}
+        transition={selectedAnimation.transition}
       >
         {children}
       </motion.div>
     </AnimatePresence>
   );
 }
-

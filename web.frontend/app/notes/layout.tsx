@@ -1,10 +1,23 @@
 "use client";
 
-import { LeftSideBarTop } from "@/components/Bar/LeftSideBarTop";
-import { CommandMenu } from "@/components/CommandMenu";
-import CreatePageModal from "@/components/Modal/CreatePageModal";
-import CreateFolderModal from "@/components/Modal/CreateFolderModal";
-import TreeView from "@/components/TreeView";
+import { useRouter, useParams, usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import { twMerge } from "tailwind-merge";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { toast, Button } from "@heroui/react";
+import {
+  ArrowUpNarrowWideIcon,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  FilePlusCornerIcon,
+  FolderPlusIcon,
+} from "lucide-react";
+
+import { LeftSideBarTop } from "@/app/_components/Bar/LeftSideBarTop";
+import { CommandMenu } from "@/app/_components/CommandMenu";
+import CreatePageModal from "@/app/_components/Modal/CreatePageModal";
+import CreateFolderModal from "@/app/_components/Modal/CreateFolderModal";
+import TreeView from "@/app/_components/TreeView";
 import { useAppSettings } from "@/contexts/AppContext";
 import {
   CreatePageProvider,
@@ -19,21 +32,8 @@ import {
   createFolder,
 } from "@/services/fileservice";
 import { buildRenamedPath } from "@/utils/stringhelper";
-import { useRouter, useParams, usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 import { useSidebar } from "@/hook/useSidebar";
-import { twMerge } from "tailwind-merge";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { addToast, Button, cn } from "@heroui/react";
-import { TreeViewRef } from "@/components/TreeView";
-import {
-  ArrowDownNarrowWideIcon,
-  ArrowUpNarrowWideIcon,
-  ChevronsDownUp,
-  ChevronsUpDown,
-  FilePlusCornerIcon,
-  FolderPlusIcon,
-} from "lucide-react";
+import { TreeViewRef } from "@/app/_components/TreeView";
 import { siteConfig } from "@/config/site";
 
 function NotesLayoutContent({ children }: { children: React.ReactNode }) {
@@ -57,8 +57,10 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsHydrated(true);
     const saved = localStorage.getItem("sidebar-width");
+
     if (saved) {
       const parsed = parseInt(saved, 10);
+
       if (!isNaN(parsed) && parsed >= 200 && parsed <= 600) {
         setSidebarWidth(parsed);
       }
@@ -144,6 +146,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         200,
         Math.min(600, resizeStartWidth.current + diff),
       );
+
       setSidebarWidth(newWidth);
     },
     [isResizing],
@@ -160,6 +163,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     if (isResizing) {
       document.addEventListener("mousemove", handleResizeMove);
       document.addEventListener("mouseup", handleResizeEnd);
+
       return () => {
         document.removeEventListener("mousemove", handleResizeMove);
         document.removeEventListener("mouseup", handleResizeEnd);
@@ -192,6 +196,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
 
       // Get parent path to refresh tree view
       const parentPath = path.substring(0, path.lastIndexOf("/")) || "/";
+
       if (treeViewRef.current) {
         treeViewRef.current.refreshPath(parentPath);
       }
@@ -209,32 +214,20 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         }
       }
 
-      addToast({
-        title: "File deleted successfully",
+      toast("File deleted successfully", {
         description: "The file has been deleted successfully",
-        color: "success",
-        hideIcon: false,
+        variant: "success",
         timeout: 2000,
-        classNames: {
-          base: cn(["bg-background/50 text-foreground", "backdrop-blur-sm"]),
-          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-        },
       });
     } catch (err) {
       console.error("Failed to delete file", err);
-      addToast({
-        title: "Failed to delete file",
+      toast("Failed to delete file", {
         description:
           err instanceof Error
             ? err.message
             : "An error occurred while deleting the file",
-        color: "danger",
-        hideIcon: false,
+        variant: "danger",
         timeout: 3000,
-        classNames: {
-          base: cn(["bg-background/50 text-foreground", "backdrop-blur-sm"]),
-          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-        },
       });
     }
   };
@@ -260,44 +253,35 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         ? createFolderPath
         : createFolderPath + "/";
       const fullPath = basePath + folderName.trim();
+
       await createFolder(fullPath);
 
       // Refresh the tree view to show the new folder
       if (treeViewRef.current) {
         const folderPathToRefresh = createFolderPath || "/";
+
         treeViewRef.current.refreshPath(folderPathToRefresh);
       }
 
-      addToast({
-        title: "Folder created successfully",
+      toast("Folder created successfully", {
         description: "The folder has been created successfully",
-        color: "success",
-        hideIcon: false,
+        variant: "success",
         timeout: 2000,
-        classNames: {
-          base: cn(["bg-background/50 text-foreground", "backdrop-blur-sm"]),
-          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-        },
       });
 
       setIsFolderModalOpen(false);
       setCreateFolderPath("");
     } catch (err) {
-      console.error("Failed to create folder", err);
-      addToast({
-        title: "Failed to create folder",
+      // console.error("Failed to create folder", err);
+      toast("Failed to create folder", {
         description:
           err instanceof Error
             ? err.message
             : "An error occurred while creating the folder",
-        color: "danger",
-        hideIcon: false,
+        variant: "danger",
         timeout: 3000,
-        classNames: {
-          base: cn(["bg-background/50 text-foreground", "backdrop-blur-sm"]),
-          closeButton: "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-        },
       });
+      throw err;
     }
   };
 
@@ -309,14 +293,14 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
 
   // close modal without saving
   const handleCloseWithoutSave = () => {
-    console.log("close modal without save", createPagePath);
+    // console.log("close modal without save", createPagePath);
     setIsOpen(false);
     setCreatePagePath("");
   };
 
   // save and close modal (called when clicking outside or Save button)
   const handleSaveAndClose = async (fileName: string, content: string) => {
-    console.log("save and close modal", createPagePath, fileName);
+    // console.log("save and close modal", createPagePath, fileName);
 
     if (createPagePath && fileName) {
       try {
@@ -331,6 +315,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         if (treeViewRef.current) {
           // Refresh the parent folder where the file was created
           const folderPathToRefresh = createPagePath || "/";
+
           treeViewRef.current.refreshPath(folderPathToRefresh);
         }
 
@@ -340,17 +325,10 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         } else {
           router.push(`/notes/${response.path}`);
         }
-        addToast({
-          title: "File created successfully",
+        toast("File created successfully", {
           description: "The file has been created successfully",
-          color: "success",
-          hideIcon: false,
+          variant: "success",
           timeout: 2000,
-          classNames: {
-            base: cn(["bg-background/50 text-foreground", "backdrop-blur-sm"]),
-            closeButton:
-              "opacity-100 absolute right-4 top-1/2 -translate-y-1/2",
-          },
         });
       } catch (err) {
         console.error("Failed to create file", err);
@@ -375,37 +353,45 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Animation: Uses translateX to slide in/out, not width changes */}
         <motion.div
           ref={sidebarRef}
+          animate={isSidebarVisible ? "expanded" : "collapsed"}
           className={twMerge(
             "bg-background flex flex-col fixed left-0 z-40",
             isCollapsed
               ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
               : "top-0 bottom-0",
           )}
+          initial={false}
           style={{ width: sidebarWidth }}
           variants={sidebarVariants}
-          animate={isSidebarVisible ? "expanded" : "collapsed"}
-          initial={false}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           <LeftSideBarTop
             handleLogout={handleLogout}
+            isCollapsed={isCollapsed}
             isMobile={isMobile || isWebView}
             onToggleSidebar={toggleSidebar}
-            isCollapsed={isCollapsed}
           />
 
           <TreeActions
+            treeViewRef={treeViewRef}
             onCreateFile={() => handleOpenCreatePage("/")}
             onCreateFolder={() => handleOpenCreateFolder("/")}
-            treeViewRef={treeViewRef}
           />
 
           <div className="flex-1 min-h-0">
             <TreeView
               ref={treeViewRef}
+              isAuthenticated={true}
               path="/"
               selectedPath={selectedPath || undefined}
+              onCopyLink={(path) => {
+                console.log("copy link", path);
+              }}
+              onCreateFolder={handleOpenCreateFolder}
+              onOpenCreatePage={handleOpenCreatePage}
+              onRemoveFile={handleRemoveFile}
+              onRename={handleRename}
               onSelect={(path) => {
                 if (editMode) {
                   router.push(`/notes/edit/${path}`);
@@ -413,40 +399,34 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
                   router.push(`/notes/${path}`);
                 }
               }}
-              onCopyLink={(path) => {
-                console.log("copy link", path);
-              }}
-              onRemoveFile={handleRemoveFile}
-              onRename={handleRename}
-              onOpenCreatePage={handleOpenCreatePage}
-              onCreateFolder={handleOpenCreateFolder}
-              isAuthenticated={true}
             />
 
             <CreatePageModal
               isOpen={isOpen}
               path={createPagePath}
-              onSave={handleSaveAndClose}
               onCloseWithoutSave={handleCloseWithoutSave}
+              onSave={handleSaveAndClose}
             />
 
             <CreateFolderModal
               isOpen={isFolderModalOpen}
               path={createFolderPath}
-              onSave={handleSaveFolder}
               onCloseWithoutSave={handleCloseFolderModal}
+              onSave={handleSaveFolder}
             />
           </div>
 
           {/* Resize Handle (desktop only) */}
           {!isCollapsed && !isMobile && !isWebView && (
-            <div
-              className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-primary/30 transition-all z-50 group"
-              onMouseDown={handleResizeStart}
+            <button
+              aria-label="Resize sidebar"
+              className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-accent/30 transition-all z-50 group"
               style={{ touchAction: "none" }}
+              type="button"
+              onMouseDown={handleResizeStart}
             >
               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
+            </button>
           )}
         </motion.div>
 
@@ -487,7 +467,7 @@ export default function NotesLayout({
 interface TreeActionsProps {
   onCreateFile: () => void;
   onCreateFolder: () => void;
-  treeViewRef: React.RefObject<TreeViewRef>;
+  treeViewRef: React.RefObject<TreeViewRef | null>;
 }
 
 const TreeActions = ({
@@ -502,6 +482,7 @@ const TreeActions = ({
   const checkOpenFolders = () => {
     if (treeViewRef.current) {
       const hasOpen = treeViewRef.current.hasOpenFolders();
+
       setHasOpenFolders(hasOpen);
     }
   };
@@ -510,6 +491,7 @@ const TreeActions = ({
   useEffect(() => {
     checkOpenFolders();
     const interval = setInterval(checkOpenFolders, 500); // Check every 500ms
+
     return () => clearInterval(interval);
   }, []);
 
@@ -531,38 +513,38 @@ const TreeActions = ({
   return (
     <div className="flex items-center gap-2 pt-2 w-full justify-center">
       <Button
-        id="create-file"
-        variant="light"
         isIconOnly
+        id="create-file"
         size="sm"
+        variant="ghost"
         onPress={onCreateFile}
       >
         <FilePlusCornerIcon className={btnstyle} />
       </Button>
 
       <Button
-        id="create-folder"
-        variant="light"
         isIconOnly
+        id="create-folder"
         size="sm"
+        variant="ghost"
         onPress={onCreateFolder}
       >
         <FolderPlusIcon className={btnstyle} />
       </Button>
 
-      <Button id="sort" variant="light" isIconOnly size="sm">
+      <Button isIconOnly id="sort" size="sm" variant="ghost">
         <ArrowUpNarrowWideIcon className={btnstyle} />
       </Button>
 
       <Button
-        id="collapse"
-        variant="light"
         isIconOnly
-        size="sm"
-        onPress={handleToggleExpandCollapse}
-        title={
+        aria-label={
           hasOpenFolders ? "Collapse all folders" : "Expand folders (2 levels)"
         }
+        id="collapse"
+        size="sm"
+        variant="ghost"
+        onPress={handleToggleExpandCollapse}
       >
         {hasOpenFolders ? (
           <ChevronsDownUp className={btnstyle} />
