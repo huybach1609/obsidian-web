@@ -16,6 +16,8 @@ import { rehypeInteractiveCheckboxes } from "./rehypeInteractiveCheckboxes";
 import { remarkInternalLinks } from "./remarkInternalLinks";
 import { resolveInternalLink } from "./resolveInternalLink";
 
+import { resolveObsidianImages } from "@/lib/parseObsidian";
+
 function createWikiLinkHandler(fileIndex: FileIndexDto[]): Handler {
   return (state: State, node: unknown, _parent: unknown): Element => {
     const wiki = node as WikiLinkNode;
@@ -61,23 +63,37 @@ export interface MarkdownContentProps {
  * Renders markdown with:
  * - GFM (tables, task lists, strikethrough)
  * - Obsidian internal links [[Note]] resolved via fileIndex
+ * - Obsidian embeds ![[image.ext]] → API /api/image (see resolveObsidianImages)
  * - Internal links use Next.js Link for client-side navigation (no full reload)
  * - Sanitized HTML
  */
 export function MarkdownContent({
   markdown,
   fileIndex,
-  className = "",
+  className: _className = "",
 }: MarkdownContentProps) {
   const handlers: Record<string, Handler> = {
     wikiLink: createWikiLinkHandler(fileIndex),
   };
 
+  const markdownWithImages = resolveObsidianImages(markdown);
+
   return (
     <Markdown
       // className={`markdown-body ${className}`.trim()}
       components={{
-        a: ({ href, children, node, ...props }) => {
+        img: ({ src, alt, ...props }) => (
+          // eslint-disable-next-line @next/next/no-img-element -- vault images from API; dynamic URLs, no Next optimizer
+          <img
+            {...props}
+            alt={alt ?? ""}
+            className="markdown-image max-w-full h-auto rounded-md"
+            decoding="async"
+            loading="lazy"
+            src={src}
+          />
+        ),
+        a: ({ href, children, node: _node, ...props }) => {
           if (href?.startsWith("/notes/")) {
             return (
               <Link
@@ -102,7 +118,7 @@ export function MarkdownContent({
       remarkPlugins={[remarkInternalLinks, remarkGfm]}
       remarkRehypeOptions={{ handlers }}
     >
-      {markdown}
+      {markdownWithImages}
     </Markdown>
   );
 }

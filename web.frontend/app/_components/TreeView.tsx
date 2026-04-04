@@ -658,11 +658,11 @@ const Node = ({
         className={`group flex items-center gap-1 px-2 py-1 cursor-pointer select-none rounded-lg hover:bg-accent/10 
         ${isSelected ? "bg-accent/79" : isFocused ? "bg-accent" : "hover:bg-accent"} 
         ${node.isInternal ? "font-medium" : ""}`}
+        role="button"
         style={{
           ...style,
           transition: "top 0.05s ease-in",
         }}
-        role="button"
         tabIndex={0}
         onClick={handleClick}
         onKeyDown={handleKeyDown}

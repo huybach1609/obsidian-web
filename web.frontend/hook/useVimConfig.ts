@@ -56,6 +56,7 @@ export function useVimConfig(): UseVimConfigReturn {
 
       // If user isn't authenticated yet, don't call protected endpoint.
       const token = getCookie(TOKEN_COOKIE_KEY);
+
       if (!token) {
         setIsLoading(false);
         isInitialLoadRef.current = false;
@@ -128,6 +129,7 @@ export function useVimConfig(): UseVimConfigReturn {
 
     try {
       const token = getCookie(TOKEN_COOKIE_KEY);
+
       if (!token) {
         throw new Error("Not authenticated");
       }
@@ -159,6 +161,7 @@ export function useVimConfig(): UseVimConfigReturn {
 
     try {
       const token = getCookie(TOKEN_COOKIE_KEY);
+
       if (!token) {
         throw new Error("Not authenticated");
       }

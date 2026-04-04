@@ -9,7 +9,10 @@ interface HeaderProps {
 export default function Header({ children, className }: HeaderProps) {
   return (
     <div
-      className={twMerge("p-4  border-b border-foreground/20  h-20", className)}
+      className={twMerge(
+        "min-h-20 border-b border-foreground/20 p-4 h-auto",
+        className,
+      )}
     >
       {children}
     </div>

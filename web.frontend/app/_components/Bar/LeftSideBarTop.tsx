@@ -46,99 +46,80 @@ export const LeftSideBarTop = ({
     setEditMode(!editMode);
   };
 
-  if (isMobile) {
-    return (
-      <Header className="flex items-center justify-between ">
-        <Dropdown className="before:bg-default-200 bg-background/90 text-foreground border-none backdrop-blur-xs">
-          <Dropdown.Trigger>
-            <Button
-              aria-label="User menu"
-              className="h-auto min-w-0 rounded-full p-0"
-              variant="ghost"
-            >
-              <Avatar className="transition-transform" size="sm">
-                <Avatar.Image alt="Admin" src="/blank.webp" />
-                <Avatar.Fallback delayMs={600}>Admin</Avatar.Fallback>
-              </Avatar>
-            </Button>
-          </Dropdown.Trigger>
-          <Dropdown.Popover>
-            <Dropdown.Menu aria-label="User Actions">
-              <Dropdown.Section>
-                <div className="px-3 py-1 text-xs text-foreground-500">
-                  Options
-                </div>
-                <Dropdown.Item
-                  key="settings"
-                  onPress={() => router.push("/settings")}
-                >
-                  My Settings
-                </Dropdown.Item>
-                <Dropdown.Item id="edit_mode" onPress={onToggleEditMode}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div>Edit mode</div>
-                    <div className="text-xs text-foreground-500">
-                      {editMode ? "On" : "Off"}
-                    </div>
-                  </div>
-                </Dropdown.Item>
-              </Dropdown.Section>
+  // if (isMobile) {
+  //   return (
+  //     <Header className="flex items-center justify-between ">
+  //       <Dropdown className="before:bg-default-200 bg-background/90 text-foreground border-none backdrop-blur-xs">
+  //         <Button
+  //           aria-label="User menu"
+  //           className="h-auto min-w-0 rounded-full p-0"
+  //           variant="ghost"
+  //         >
+  //           <Avatar className="transition-transform" size="sm">
+  //             <Avatar.Image alt="Admin" src="/blank.webp" />
+  //             <Avatar.Fallback delayMs={600}>Admin</Avatar.Fallback>
+  //           </Avatar>
+  //         </Button>
+  //         <Dropdown.Popover>
+  //           <Dropdown.Menu aria-label="User Actions">
+  //             <Dropdown.Section>
+  //               <div className="px-3 py-1 text-xs text-foreground-500">
+  //                 Options
+  //               </div>
+  //               <Dropdown.Item
+  //                 key="settings"
+  //                 onPress={() => router.push("/settings")}
+  //               >
+  //                 My Settings
+  //               </Dropdown.Item>
+  //               <Dropdown.Item id="edit_mode" onPress={onToggleEditMode}>
+  //                 <div className="flex items-center justify-between gap-2">
+  //                   <div>Edit mode</div>
+  //                   <div className="text-xs text-foreground-500">
+  //                     {editMode ? "On" : "Off"}
+  //                   </div>
+  //                 </div>
+  //               </Dropdown.Item>
+  //             </Dropdown.Section>
 
-              <Dropdown.Item id="theme_switch" onPress={onChange}>
-                <div className="flex items-center justify-between gap-2">
-                  <div>Theme switch</div>
-                  <div>
-                    {!isDarkTheme ? (
-                      <SunIcon size={15} />
-                    ) : (
-                      <MoonIcon size={15} />
-                    )}
-                  </div>
-                </div>
-              </Dropdown.Item>
-              <Dropdown.Item id="logout" onPress={handleLogout}>
-                Log Out
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown.Popover>
-        </Dropdown>
+  //             <Dropdown.Item id="theme_switch" onPress={onChange}>
+  //               <div className="flex items-center justify-between gap-2">
+  //                 <div>Theme switch</div>
+  //                 <div>
+  //                   {!isDarkTheme ? (
+  //                     <SunIcon size={15} />
+  //                   ) : (
+  //                     <MoonIcon size={15} />
+  //                   )}
+  //                 </div>
+  //               </div>
+  //             </Dropdown.Item>
+  //             <Dropdown.Item id="logout" onPress={handleLogout}>
+  //               Log Out
+  //             </Dropdown.Item>
+  //           </Dropdown.Menu>
+  //         </Dropdown.Popover>
+  //       </Dropdown>
 
-        <ButtonGroup className="">
-          <Button
-            isIconOnly
-            aria-label="Open search"
-            className="bg-foreground/10"
-            onPress={() => {
-              // Simulate Ctrl+K to open CommandMenu
-              if (typeof document !== "undefined") {
-                const event = new KeyboardEvent("keydown", {
-                  key: "k",
-                  ctrlKey: true,
-                });
-
-                document.dispatchEvent(event);
-              }
-            }}
-          >
-            <FileSearchCorner className="h-5 w-5 text-foreground" />
-          </Button>
-          <ToggleSidebarButton
-            className="bg-foreground/10"
-            isCollapsed={isCollapsed ?? false}
-            onToggleSidebar={onToggleSidebar ?? (() => {})}
-          />
-        </ButtonGroup>
-      </Header>
-    );
-  }
+  //       <ButtonGroup className="">
+  //         <ToggleSidebarButton
+  //           className="bg-foreground/10"
+  //           isCollapsed={isCollapsed ?? false}
+  //           onToggleSidebar={onToggleSidebar ?? (() => {})}
+  //         />
+  //       </ButtonGroup>
+  //     </Header>
+  //   );
+  // }
 
   return (
     <Header>
-      <div className="flex items-center justify-between h-full gap-2">
+      <ButtonGroup className="flex items-center justify-between h-full">
         <Dropdown className="w-full">
           <Button
             aria-label="User menu"
-            className="gap-2 bg-accent/30 w-full p-3 justify-between hover:bg-accent/80"
+            className="gap-2 w-full p-3 justify-between"
+            variant="tertiary"
           >
             <p className="font-bold text-foreground">@Admin</p>
             <ChevronsUpDown className="w-4 h-4 text-foreground" />
@@ -185,13 +166,35 @@ export const LeftSideBarTop = ({
             </Dropdown.Menu>
           </Dropdown.Popover>
         </Dropdown>
+        {isMobile && (
+          <Button
+            isIconOnly
+            aria-label="Open search"
+            className="p-0 md:p-5"
+            variant="tertiary"
+            onPress={() => {
+              // Simulate Ctrl+K to open CommandMenu
+              if (typeof document !== "undefined") {
+                const event = new KeyboardEvent("keydown", {
+                  key: "k",
+                  ctrlKey: true,
+                });
+
+                document.dispatchEvent(event);
+              }
+            }}
+          >
+            <ButtonGroup.Separator />
+            <FileSearchCorner className=" text-foreground" />
+          </Button>
+        )}
         {/* Sidebar Toggle Button */}
         <ToggleSidebarButton
-          className="bg-accent/30 p-3 pr-3 hover:bg-accent/80"
+          className=" p-3 pr-3 "
           isCollapsed={isCollapsed ?? false}
           onToggleSidebar={onToggleSidebar ?? (() => {})}
         />
-      </div>
+      </ButtonGroup>
     </Header>
   );
 };
@@ -210,8 +213,10 @@ const ToggleSidebarButton = ({
         isIconOnly
         aria-label="Toggle sidebar"
         className={className}
+        variant="tertiary"
         onPress={onToggleSidebar}
       >
+        <ButtonGroup.Separator />
         {isCollapsed ? (
           <PanelLeftOpen className="h-5 w-5 text-foreground" />
         ) : (

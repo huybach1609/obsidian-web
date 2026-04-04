@@ -129,7 +129,7 @@ export default function AccountSettingsPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
-          
+
           <Input
             disabled={isSaving}
             placeholder="Re-enter new password"

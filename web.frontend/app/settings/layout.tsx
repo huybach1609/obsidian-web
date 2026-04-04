@@ -154,10 +154,10 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Resize Handle */}
         {!isCollapsed && (
           <button
-            type="button"
             aria-label="Resize sidebar"
             className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-accent/30 transition-all z-50 group"
             style={{ touchAction: "none" }}
+            type="button"
             onMouseDown={handleResizeStart}
           >
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />

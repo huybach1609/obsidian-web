@@ -16,6 +16,29 @@ const reactAriaUtilsRoot = path.resolve(__dirname, 'node_modules/@react-aria/uti
 const nextConfig = {
   output: 'standalone',
 
+  images: {
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost', pathname: '/api/**' },
+      { protocol: 'https', hostname: 'localhost', pathname: '/api/**' },
+      { protocol: 'http', hostname: '127.0.0.1', pathname: '/api/**' },
+      { protocol: 'https', hostname: '127.0.0.1', pathname: '/api/**' },
+      ...(process.env.NEXT_PUBLIC_API_HOST
+        ? [
+            {
+              protocol: 'http',
+              hostname: process.env.NEXT_PUBLIC_API_HOST,
+              pathname: '/api/**',
+            },
+            {
+              protocol: 'https',
+              hostname: process.env.NEXT_PUBLIC_API_HOST,
+              pathname: '/api/**',
+            },
+          ]
+        : []),
+    ],
+  },
+
   // Turbopack: use project-relative paths only (absolute paths break resolution).
   turbopack: {
     resolveAlias: {

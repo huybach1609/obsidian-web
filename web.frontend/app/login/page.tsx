@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Modal } from "@heroui/react";
-import { LockIcon, MailIcon } from "lucide-react";
+import Image from "next/image";
 
 import { setAuthToken } from "@/lib/axios";
 import {
@@ -17,7 +17,6 @@ import {
   getLastVisitedPathFromCookie,
 } from "@/contexts/AppContext";
 import { siteConfig } from "@/config/site";
-import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -101,17 +100,17 @@ export default function LoginPage() {
   return (
     <div className="">
       <Image
-        width={1000}
-        height={1000}
         alt="Logo"
         className="h-[100vh] w-full object-cover"
+        height={1000}
         src="/bg_login.webp"
+        width={1000}
       />
       <Modal>
         <Modal.Backdrop
-          variant="blur"
           isDismissable={false}
           isOpen={true}
+          variant="blur"
           onOpenChange={() => {}}
         >
           <Modal.Container placement="center">

@@ -197,6 +197,7 @@ export default function VimSettingsPage() {
               value={newKeyMapping.mode ?? null}
               onChange={(value) => {
                 const modeKey = Array.isArray(value) ? value[0] : value;
+
                 if (!modeKey) return;
                 setNewKeyMapping({
                   ...newKeyMapping,
@@ -390,6 +391,7 @@ export default function VimSettingsPage() {
               value={newUnmappedKey.mode ?? null}
               onChange={(value) => {
                 const modeKey = Array.isArray(value) ? value[0] : value;
+
                 if (!modeKey) return;
                 setNewUnmappedKey({
                   ...newUnmappedKey,

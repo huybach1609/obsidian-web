@@ -9,6 +9,7 @@ import { useTheme } from "next-themes";
 import { getFile, updateFile } from "@/services/fileservice";
 import { siteConfig } from "@/config/site";
 import { decodePathParam } from "@/utils/stringhelper";
+import { getVaultImageUrl, isVaultImagePath } from "@/lib/parseObsidian";
 import { useAppSettings } from "@/contexts/AppContext";
 import { useEditPage } from "@/contexts/EditPageContext";
 
@@ -64,13 +65,23 @@ export default function EditPage() {
     };
   }, [filePath]);
 
-  // Fetch file content
+  // Fetch file content (skip text load for binary images — GET /file reads as UTF-8 text)
   useEffect(() => {
-    // Reset markdown to null when filePath changes to trigger exit animation
     setMarkdown(null);
     setHasChanges(false);
-    // Set loading to true immediately when filePath changes
     setIsContentLoading(true);
+
+    if (!filePath) {
+      setIsContentLoading(false);
+
+      return;
+    }
+
+    if (isVaultImagePath(filePath)) {
+      setIsContentLoading(false);
+
+      return;
+    }
 
     const loadFile = async () => {
       try {
@@ -95,10 +106,14 @@ export default function EditPage() {
 
   // Handle save
   const handleSave = useCallback(
-    async (value?: string) => {
-      const contentToSave = value || markdownRef.current;
+    async (value?: unknown) => {
+      // CodeMirror passes the document string. HeroUI Button onPress passes a press event object.
+      const contentToSave =
+        typeof value === "string" ? value : markdownRef.current;
 
-      if (!contentToSave) return;
+      if (contentToSave === null || contentToSave === undefined) return;
+
+      if (isVaultImagePath(filePathRef.current)) return;
 
       setIsSaving(true);
       try {
@@ -140,10 +155,20 @@ export default function EditPage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasChanges]);
 
+  const imageSrc =
+    filePath && isVaultImagePath(filePath) ? getVaultImageUrl(filePath) : null;
+
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="h-24 bg-transparent" />
-      {markdown !== null ? (
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      {imageSrc ? (
+        <div className="flex justify-center px-4 pb-8">
+          <img
+            alt={filePath?.split("/").pop() || ""}
+            className="max-w-full max-h-[calc(100vh-8rem)] w-auto object-contain rounded-md border border-default-200"
+            src={imageSrc}
+          />
+        </div>
+      ) : markdown !== null ? (
         <CodeMirrorEditor
           key={filePath}
           initialContent={markdown}

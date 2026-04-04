@@ -43,7 +43,7 @@ export default function AnimatedContent({
         animate={
           shouldAnimate ? selectedAnimation.animate : selectedAnimation.initial
         }
-        className="flex-1 overflow-hidden"
+        className="flex min-h-0 flex-1 flex-col overflow-hidden"
         exit={selectedAnimation.exit}
         initial={selectedAnimation.initial}
         style={{ transformStyle: "preserve-3d" }}

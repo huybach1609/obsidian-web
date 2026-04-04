@@ -278,8 +278,8 @@ namespace backend.Controllers
             {
                 var sourceNormalized = Path.GetFullPath(sourceFull).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 var destNormalized = Path.GetFullPath(destinationParentFull).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                
-                if (destNormalized.StartsWith(sourceNormalized + Path.DirectorySeparatorChar) || 
+
+                if (destNormalized.StartsWith(sourceNormalized + Path.DirectorySeparatorChar) ||
                     destNormalized.StartsWith(sourceNormalized + Path.AltDirectorySeparatorChar) ||
                     destNormalized == sourceNormalized)
                 {
@@ -393,7 +393,7 @@ namespace backend.Controllers
                 .UseSoftlineBreakAsHardlineBreak()
                 .Build();
             var html = Markdown.ToHtml(md, pipeline);
-            
+
             // Remove disabled attribute and add data-interactive to all checkboxes for click handling
             // Process all input tags to find checkboxes
             html = System.Text.RegularExpressions.Regex.Replace(
@@ -402,33 +402,33 @@ namespace backend.Controllers
                 (System.Text.RegularExpressions.MatchEvaluator)((match) =>
                 {
                     var attributes = match.Groups[1].Value;
-                    
+
                     // Check if this is a checkbox
                     if (!System.Text.RegularExpressions.Regex.IsMatch(attributes, @"type\s*=\s*""checkbox""", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                     {
                         return match.Value; // Not a checkbox, return unchanged
                     }
-                    
+
                     // Remove disabled attribute in all its forms (more aggressive matching)
                     attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s*disabled\s*=\s*""[^""]*""\s*", " ", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s+disabled\s+", " ", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s+disabled\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"^\s*disabled\s+", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     attributes = attributes.Trim();
-                    
+
                     // Normalize spaces
                     attributes = System.Text.RegularExpressions.Regex.Replace(attributes, @"\s+", " ");
-                    
+
                     // Add data-interactive if not present
                     if (!System.Text.RegularExpressions.Regex.IsMatch(attributes, @"\bdata-interactive\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                     {
                         attributes = attributes + " data-interactive=\"true\"";
                     }
-                    
+
                     return $"<input {attributes}>";
                 }),
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            
+
             var wrapped = $"<div class=\"markdown-body\">{html}</div>";
 
             return Content(wrapped, "text/html");
@@ -453,7 +453,7 @@ namespace backend.Controllers
                 // Match markdown checkbox patterns: - [ ] or - [x] or * [ ] or * [x]
                 var checkboxPattern = new System.Text.RegularExpressions.Regex(@"^(\s*[-*])\s+\[([ xX])\]\s+(.+)$");
                 var match = checkboxPattern.Match(lines[i]);
-                
+
                 if (match.Success)
                 {
                     // Check if the text after checkbox matches (case-insensitive, trimmed)
@@ -465,7 +465,7 @@ namespace backend.Controllers
                         var marker = match.Groups[1].Value; // - or *
                         var currentState = match.Groups[2].Value; // x, X, or space
                         var text = match.Groups[3].Value;
-                        
+
                         // Toggle: if checked (x/X), uncheck (space), otherwise check (x)
                         var newState = (currentState == " " || currentState == "") ? "x" : " ";
                         lines[i] = $"{marker} [{newState}] {text}";
@@ -527,7 +527,7 @@ namespace backend.Controllers
         //        _cache.Set(cacheKey, fileList, TimeSpan.FromMinutes(10));
         //    }
         //    Console.WriteLine(fileList);
-            
+
 
         //    return Ok(fileList);
         //}
@@ -555,9 +555,56 @@ namespace backend.Controllers
                 _cache.Set(cacheKey, fileList, TimeSpan.FromMinutes(10));
             }
 
-            Console.WriteLine(fileList);
+            // Console.WriteLine(fileList);
 
             return Ok(fileList);
+        }
+        // FilesController.cs — Thêm endpoint này
+
+        [HttpGet("image")]
+        [AllowAnonymous]
+        public IActionResult GetImage([FromQuery] string filename)
+        {
+            if (string.IsNullOrWhiteSpace(filename))
+                return BadRequest();
+
+            // SafePath đã có sẵn trong controller của bạn — chống path traversal
+            string full;
+            try
+            {
+                // Tìm theo tên file trong toàn vault (Obsidian lưu flat)
+                var found = Directory
+                    .GetFiles(_vaultRoot, filename, SearchOption.AllDirectories)
+                    .FirstOrDefault();
+
+                if (found == null) return NotFound();
+                full = found;
+
+                // Đảm bảo vẫn nằm trong vault
+                if (!Path.GetFullPath(full).StartsWith(Path.GetFullPath(_vaultRoot)))
+                    return Unauthorized();
+            }
+            catch
+            {
+                return BadRequest();
+            }
+
+            // Chỉ cho phép file ảnh
+            var ext = Path.GetExtension(filename).ToLowerInvariant();
+            var mime = ext switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                ".svg" => "image/svg+xml",
+                _ => null
+            };
+
+            if (mime == null) return BadRequest(new { error = "Not an image file" });
+
+            Response.Headers["Cache-Control"] = "public, max-age=3600";
+            return PhysicalFile(full, mime);
         }
 
 
