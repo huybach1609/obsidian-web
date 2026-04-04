@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button, Input, Modal } from "@heroui/react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button, Input, InputGroup, TextField } from "@heroui/react";
+import { ArrowRight, EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { setAuthToken } from "@/lib/axios";
 import {
@@ -27,6 +29,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
   const [isInitialAccountMode, setIsInitialAccountMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const token = accessToken ?? getTokenFromCookie();
@@ -54,7 +58,6 @@ export default function LoginPage() {
 
         setAccessToken(data.token);
         setAuthToken(data.token);
-        // Redirect to last visited path or home (which will handle redirect)
         router.push("/");
       } else {
         if (password !== confirmPassword) {
@@ -63,7 +66,6 @@ export default function LoginPage() {
           return;
         }
 
-        // Create the initial account, then log in with it
         await registerInitialAccount(username, password);
         const data = await login(username, password);
 
@@ -74,7 +76,6 @@ export default function LoginPage() {
     } catch (err) {
       console.error("Login error:", err);
       if (err instanceof LoginError) {
-        // If no credentials are configured yet, switch to "initial account" mode
         if (
           !isInitialAccountMode &&
           err.statusCode === 404 &&
@@ -95,103 +96,190 @@ export default function LoginPage() {
     }
   }
 
-  const { name } = siteConfig;
+  const { name, description } = siteConfig;
 
   return (
-    <div className="">
-      <Image
-        alt="Logo"
-        className="h-[100vh] w-full object-cover"
-        height={1000}
-        src="/bg_login.webp"
-        width={1000}
-      />
-      <Modal>
-        <Modal.Backdrop
-          isDismissable={false}
-          isOpen={true}
-          variant="blur"
-          onOpenChange={() => {}}
-        >
-          <Modal.Container placement="center">
-            <Modal.Dialog>
-              <form onSubmit={handleSubmit}>
-                <Modal.Header className="flex gap-1 items-center">
-                  <img alt="Logo" className="h-10 w-10" src="/favicon.ico" />
-                  <h2 className="text-2xl font-bold">{name}</h2>
-                </Modal.Header>
-                <Modal.Body>
-                  <Input
-                    required
-                    autoComplete="username"
-                    disabled={loggingIn}
-                    placeholder="Enter your username"
-                    value={username}
-                    variant="primary"
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                  <Input
-                    required
-                    autoComplete="current-password"
-                    disabled={loggingIn}
-                    placeholder={
-                      isInitialAccountMode
-                        ? "Enter a new password"
-                        : "Enter your password"
-                    }
-                    type="password"
-                    value={password}
-                    variant="primary"
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  {isInitialAccountMode && (
-                    <Input
-                      required
-                      autoComplete="new-password"
-                      disabled={loggingIn}
-                      placeholder="Re-enter your password"
-                      type="password"
-                      value={confirmPassword}
-                      variant="secondary"
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                  )}
-                  {isInitialAccountMode && (
-                    <p className="text-xs text-default-500">
-                      This will create the initial account and store it securely
-                      in your Obsidian vault.
-                    </p>
-                  )}
-                  {error && (
-                    <div className="p-3 bg-danger/10 dark:bg-danger/20 border border-danger/20 dark:border-danger/40 rounded-md text-danger text-sm">
-                      {error}
-                    </div>
-                  )}
-                </Modal.Body>
-                <Modal.Footer>
+    <div className="flex min-h-screen w-full flex-1 flex-col md:flex-row md:min-h-0">
+      <section className="relative hidden min-h-0 w-full md:flex md:w-1/2 md:min-h-screen">
+        <Image
+          fill
+          priority
+          alt=""
+          className="object-cover"
+          sizes="50vw"
+          src="/bg_login.webp"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/50"
+        />
+        <div className="relative z-10 flex h-full min-h-screen flex-col justify-between p-8 lg:p-10">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Image
+                alt=""
+                className="h-10 w-10"
+                height={40}
+                src="/favicon.ico"
+                width={40}
+              />
+              <span className="text-lg font-semibold text-white">{name}</span>
+            </div>
+            <Link
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/30 px-4 py-2 text-sm text-white transition-colors hover:bg-white/10"
+              href="/"
+            >
+              Back to home
+              <ArrowRight aria-hidden className="h-4 w-4" />
+            </Link>
+          </div>
+          <p className="max-w-md text-balance text-2xl font-semibold leading-tight tracking-tight text-white lg:text-3xl">
+            Your notes, synced and ready wherever you open them.
+          </p>
+          <p className="text-sm text-white/70">{description}</p>
+        </div>
+      </section>
+
+      <section className="flex flex-1 flex-col justify-center bg-background px-6 py-10 md:w-1/2 md:px-12 lg:px-16">
+        <div className="mx-auto w-full max-w-md">
+          <header className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              {isInitialAccountMode ? "Set up your vault" : "Sign in"}
+            </h1>
+            <p className="mt-2 text-sm text-muted">
+              {isInitialAccountMode
+                ? "Create the first account for this server. Credentials are stored in your Obsidian vault."
+                : "Access your vault with your username and password."}
+            </p>
+          </header>
+
+          <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <Input
+              fullWidth
+              required
+              autoComplete="username"
+              disabled={loggingIn}
+              placeholder="Username"
+              value={username}
+              variant="primary"
+              onChange={(e) => setUsername(e.target.value)}
+            />
+
+            <TextField fullWidth variant="primary">
+              <InputGroup fullWidth variant="primary">
+                <InputGroup.Input
+                  required
+                  aria-label={
+                    isInitialAccountMode ? "New password" : "Password"
+                  }
+                  autoComplete={
+                    isInitialAccountMode ? "new-password" : "current-password"
+                  }
+                  disabled={loggingIn}
+                  placeholder={
+                    isInitialAccountMode
+                      ? "Enter a new password"
+                      : "Enter your password"
+                  }
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <InputGroup.Suffix className="pr-1">
                   <Button
-                    isDisabled={
-                      loggingIn ||
-                      !username ||
-                      !password ||
-                      (isInitialAccountMode && !confirmPassword)
+                    isIconOnly
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
                     }
-                    type="submit"
+                    className="size-9 min-w-9 shrink-0"
+                    isDisabled={loggingIn}
+                    type="button"
+                    variant="ghost"
+                    onPress={() => setShowPassword((v) => !v)}
                   >
-                    {loggingIn
-                      ? isInitialAccountMode
-                        ? "Creating account..."
-                        : "Logging in..."
-                      : isInitialAccountMode
-                        ? "Create initial account"
-                        : "Sign in"}
+                    {showPassword ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )}
                   </Button>
-                </Modal.Footer>
-              </form>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+                </InputGroup.Suffix>
+              </InputGroup>
+            </TextField>
+
+            {isInitialAccountMode && (
+              <TextField fullWidth variant="secondary">
+                <InputGroup fullWidth variant="secondary">
+                  <InputGroup.Input
+                    required
+                    aria-label="Confirm password"
+                    autoComplete="new-password"
+                    disabled={loggingIn}
+                    placeholder="Re-enter your password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <InputGroup.Suffix className="pr-1">
+                    <Button
+                      isIconOnly
+                      aria-label={
+                        showConfirmPassword
+                          ? "Hide confirm password"
+                          : "Show confirm password"
+                      }
+                      className="size-9 min-w-9 shrink-0"
+                      isDisabled={loggingIn}
+                      type="button"
+                      variant="ghost"
+                      onPress={() => setShowConfirmPassword((v) => !v)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOffIcon className="size-4" />
+                      ) : (
+                        <EyeIcon className="size-4" />
+                      )}
+                    </Button>
+                  </InputGroup.Suffix>
+                </InputGroup>
+              </TextField>
+            )}
+
+            {isInitialAccountMode && (
+              <p className="text-xs text-default-500">
+                This will create the initial account and store it securely in
+                your Obsidian vault.
+              </p>
+            )}
+
+            {error && (
+              <div className="rounded-md border border-danger/20 bg-danger/10 p-3 text-sm text-danger dark:border-danger/40 dark:bg-danger/20">
+                {error}
+              </div>
+            )}
+
+            <Button
+              className="w-full"
+              isDisabled={
+                loggingIn ||
+                !username ||
+                !password ||
+                (isInitialAccountMode && !confirmPassword)
+              }
+              type="submit"
+              variant="primary"
+            >
+              {loggingIn
+                ? isInitialAccountMode
+                  ? "Creating account..."
+                  : "Signing in..."
+                : isInitialAccountMode
+                  ? "Create initial account"
+                  : "Sign in"}
+            </Button>
+          </form>
+        </div>
+      </section>
     </div>
   );
 }

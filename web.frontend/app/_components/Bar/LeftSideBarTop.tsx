@@ -1,5 +1,4 @@
-import { Button, ButtonGroup, Dropdown, Avatar } from "@heroui/react";
-// import { useIsSSR } from "@react-aria/ssr";
+import { Button, ButtonGroup, Dropdown } from "@heroui/react";
 import { useTheme } from "next-themes";
 import {
   MoonIcon,

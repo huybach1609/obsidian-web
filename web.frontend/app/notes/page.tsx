@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClockOff, PanelLeftIcon } from "lucide-react";
+import { PanelLeftIcon } from "lucide-react";
 import { Button } from "@heroui/react";
 
 import HelpSheet from "@/app/_components/HelpSheet";
