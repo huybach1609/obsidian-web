@@ -23,9 +23,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 bun && \
-    adduser --system --uid 1001 bun
-
 COPY --from=builder /app/public ./public
 
 COPY --from=builder --chown=bun:bun /app/.next/standalone ./
