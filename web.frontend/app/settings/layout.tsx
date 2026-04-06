@@ -12,13 +12,15 @@ import { usePersistedSidebarWidth } from "@/hook/usePersistedSidebarWidth";
 import { useShellSidebarState } from "@/hook/useShellSidebarState";
 import { useSidebar } from "@/hook/useSidebar";
 import { useSidebarResize } from "@/hook/useSidebarResize";
+import Header from "@/app/_components/Header";
+import { Button } from "@heroui/react";
+import { PanelLeftIcon } from "lucide-react";
 
 const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { isMobile, isWebView } = usePlatform();
-  const { setAccessToken } = useAppSettings();
+  const { setAccessToken, pageTitle, setPageTitle } = useAppSettings();
   const { sidebarWidth, setSidebarWidth } = usePersistedSidebarWidth();
-
   const handleLogout = () => {
     setAccessToken(null);
     router.push("/login");
@@ -88,6 +90,27 @@ const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
         <SidebarShell.Main
           marginLeft={!isNarrow && isSidebarVisible ? sidebarWidth : 0}
         >
+          <Header className="sticky top-0 z-10 w-full shrink-0 bg-background/50 backdrop-blur-sm flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                {pageTitle.title}
+              </h1>
+              <p className="text-foreground/60 mt-2">{pageTitle.description}</p>
+            </div>
+            {isMobile && (
+              <Button
+                isIconOnly
+                aria-label="Toggle sidebar"
+                className="z-50 p-0 md:p-5"
+                size="sm"
+                variant="tertiary"
+                onPress={() => toggleSidebar()}
+              >
+                <PanelLeftIcon className="h-5 w-5" />
+              </Button>
+            )}
+          </Header>
+
           {children}
         </SidebarShell.Main>
       </SidebarShell.Root>

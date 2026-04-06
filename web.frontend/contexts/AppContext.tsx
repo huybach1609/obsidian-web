@@ -44,6 +44,8 @@ type AppContextValue = {
   setVimConfig: (config: VimConfig) => Promise<void>;
   setLastVisitedPath: (path: string | null) => void;
   clearAppSettings: () => void;
+  pageTitle: PageTitle;
+  setPageTitle: (pageTitle: PageTitle) => void;
 };
 
 const defaultValue: AppContextValue = {
@@ -54,6 +56,11 @@ const defaultValue: AppContextValue = {
   vimConfig: defaultVimConfig,
   fileIndex: [],
   lastVisitedPath: null,
+  pageTitle: {
+    title: "",
+    icon: null,
+    description: "",
+  },
   setThemeMode: () => {},
   setAccessToken: () => {},
   clearAppSettings: () => {},
@@ -61,6 +68,7 @@ const defaultValue: AppContextValue = {
   setVimMode: () => {},
   setVimConfig: async () => {},
   setLastVisitedPath: () => {},
+  setPageTitle: (pageTitle: PageTitle) => {},
 };
 
 const AppContext = createContext<AppContextValue>(defaultValue);
@@ -77,6 +85,11 @@ export function getLastVisitedPathFromCookie() {
   return getCookie(LAST_VISITED_PATH_COOKIE_KEY);
 }
 
+export interface PageTitle {
+  title: string;
+  icon: React.ReactNode;
+  description: string;
+}
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const { resolvedTheme, setTheme } = useTheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>("obsidian-dark");
@@ -87,6 +100,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [lastVisitedPath, setLastVisitedPathState] = useState<string | null>(
     null,
   );
+  const [pageTitle, setPageTitleState] = useState<PageTitle>({
+    title: "",
+    icon: null,
+    description: "",
+  });
 
   useEffect(() => {
     // Tailwind's `dark:` utilities require the `dark` class on <html>.
@@ -247,6 +265,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         vimConfig,
         fileIndex,
         lastVisitedPath,
+        pageTitle,
         setThemeMode: updateThemeMode,
         setAccessToken: updateAccessToken,
         clearAppSettings,
@@ -254,6 +273,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         setVimMode: updateVimMode,
         setVimConfig: updateVimConfig,
         setLastVisitedPath: updateLastVisitedPath,
+        setPageTitle: setPageTitleState,
       }}
     >
       {children}

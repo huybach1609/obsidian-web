@@ -25,9 +25,11 @@ import {
   VimExCommand,
   VimMode,
 } from "@/types/vimConfig";
+import { VimLogoIcon } from "@/app/_components/icons/VimLogoIcon";
 
 export default function VimSettingsPage() {
-  const { vimMode, setVimMode, vimConfig, setVimConfig } = useAppSettings();
+  const { setPageTitle, vimMode, setVimMode, vimConfig, setVimConfig } =
+    useAppSettings();
   const [localConfig, setLocalConfig] = useState<VimConfig>(vimConfig);
   const [newKeyMapping, setNewKeyMapping] = useState<Partial<VimKeyMapping>>({
     keys: "",
@@ -47,6 +49,13 @@ export default function VimSettingsPage() {
     mode: "insert",
   });
 
+  useEffect(() => {
+    setPageTitle({
+      title: "Vim Configuration",
+      description: "Customize your Vim keybindings and commands",
+      icon: <VimLogoIcon />,
+    });
+  }, []);
   useEffect(() => {
     setLocalConfig(vimConfig);
   }, [vimConfig]);
@@ -132,19 +141,13 @@ export default function VimSettingsPage() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Vim Configuration
-          </h1>
-          <p className="text-foreground/60 mt-2">
-            Customize your Vim keybindings and commands
-          </p>
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-10 md:px-6">
+      <div className="sticky top-0 z-20 -mx-4 border-b border-default-100 bg-background/85 px-4 py-3 backdrop-blur md:mx-0 md:rounded-t-lg md:px-0">
+        <div className="flex items-center justify-end">
+          <Button className="font-semibold" onPress={handleSave}>
+            Save Configuration
+          </Button>
         </div>
-        <Button className="font-semibold" onPress={handleSave}>
-          Save Configuration
-        </Button>
       </div>
 
       {/* Vim Mode Toggle */}
@@ -173,9 +176,9 @@ export default function VimSettingsPage() {
           </p>
         </Card.Header>
         <Card.Content className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start">
             <Input
-              className="flex-1"
+              className="w-full md:flex-1"
               placeholder="Keys (e.g., jj)"
               value={newKeyMapping.keys || ""}
               onChange={(e) =>
@@ -183,7 +186,7 @@ export default function VimSettingsPage() {
               }
             />
             <Input
-              className="flex-1"
+              className="w-full md:flex-1"
               placeholder="Action (e.g., &lt;Esc&gt;)"
               value={newKeyMapping.action || ""}
               onChange={(e) =>
@@ -192,7 +195,7 @@ export default function VimSettingsPage() {
             />
             <Select
               aria-label="Select mode"
-              className="w-40"
+              className="w-full md:w-40"
               placeholder="Mode"
               value={newKeyMapping.mode ?? null}
               onChange={(value) => {
@@ -220,55 +223,67 @@ export default function VimSettingsPage() {
                 </ListBox>
               </Select.Popover>
             </Select>
-            <Button isIconOnly variant="outline" onPress={handleAddKeyMapping}>
+            <Button
+              isIconOnly
+              aria-label="Add key mapping"
+              className="self-end md:self-auto"
+              size="sm"
+              variant="ghost"
+              onPress={handleAddKeyMapping}
+            >
               <PlusIcon className="w-5 h-5" />
             </Button>
           </div>
 
           {localConfig.keyMappings.length > 0 && (
-            <Table aria-label="Key mappings">
-              <TableHeader>
-                <TableColumn>KEYS</TableColumn>
-                <TableColumn>ACTION</TableColumn>
-                <TableColumn>MODE</TableColumn>
-                <TableColumn>ACTIONS</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {localConfig.keyMappings.map((mapping, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-default-100 rounded text-sm">
-                        {mapping.keys}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-default-100 rounded text-sm">
-                        {mapping.action}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        color={mapping.mode === "insert" ? "warning" : "accent"}
-                        size="sm"
-                        // variant="solid"
-                      >
-                        {mapping.mode}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        isIconOnly
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => handleRemoveKeyMapping(index)}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+              <Table aria-label="Key mappings">
+                <TableHeader>
+                  <TableColumn>KEYS</TableColumn>
+                  <TableColumn>ACTION</TableColumn>
+                  <TableColumn>MODE</TableColumn>
+                  <TableColumn>ACTIONS</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {localConfig.keyMappings.map((mapping, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <code className="px-2 py-1 bg-default-100 rounded text-sm">
+                          {mapping.keys}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <code className="px-2 py-1 bg-default-100 rounded text-sm">
+                          {mapping.action}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          color={
+                            mapping.mode === "insert" ? "warning" : "accent"
+                          }
+                          size="sm"
+                          variant="soft"
+                        >
+                          {mapping.mode}
+                        </Chip>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          isIconOnly
+                          aria-label={`Remove key mapping ${mapping.keys}`}
+                          size="sm"
+                          variant="ghost"
+                          onPress={() => handleRemoveKeyMapping(index)}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </Card.Content>
       </Card>
@@ -282,9 +297,9 @@ export default function VimSettingsPage() {
           </p>
         </Card.Header>
         <Card.Content className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start">
             <Input
-              className="flex-1"
+              className="w-full md:flex-1"
               placeholder="Command name (e.g., write)"
               value={newExCommand.name || ""}
               onChange={(e) =>
@@ -292,7 +307,7 @@ export default function VimSettingsPage() {
               }
             />
             <Input
-              className="flex-1"
+              className="w-full md:flex-1"
               placeholder="Short name (e.g., w)"
               value={newExCommand.shortName || ""}
               onChange={(e) =>
@@ -303,7 +318,7 @@ export default function VimSettingsPage() {
               }
             />
             <Input
-              className="flex-1"
+              className="w-full md:flex-1"
               placeholder="Handler function body"
               value={newExCommand.handler || ""}
               onChange={(e) =>
@@ -313,52 +328,61 @@ export default function VimSettingsPage() {
                 })
               }
             />
-            <Button isIconOnly variant="outline" onPress={handleAddExCommand}>
+            <Button
+              isIconOnly
+              aria-label="Add Ex command"
+              className="self-end md:self-auto"
+              size="sm"
+              variant="ghost"
+              onPress={handleAddExCommand}
+            >
               <PlusIcon className="w-5 h-5" />
             </Button>
           </div>
 
           {localConfig.exCommands.length > 0 && (
-            <Table aria-label="Ex commands">
-              <TableHeader>
-                <TableColumn>NAME</TableColumn>
-                <TableColumn>SHORT NAME</TableColumn>
-                <TableColumn>HANDLER</TableColumn>
-                <TableColumn>ACTIONS</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {localConfig.exCommands.map((cmd, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-default-100 rounded text-sm">
-                        :{cmd.name}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-default-100 rounded text-sm">
-                        :{cmd.shortName}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-default-100 rounded text-xs max-w-md truncate block">
-                        {cmd.handler}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        isIconOnly
-                        // color="danger"
-                        size="sm"
-                        variant="danger"
-                        onPress={() => handleRemoveExCommand(index)}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+              <Table aria-label="Ex commands">
+                <TableHeader>
+                  <TableColumn>NAME</TableColumn>
+                  <TableColumn>SHORT NAME</TableColumn>
+                  <TableColumn>HANDLER</TableColumn>
+                  <TableColumn>ACTIONS</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {localConfig.exCommands.map((cmd, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <code className="px-2 py-1 bg-default-100 rounded text-sm">
+                          :{cmd.name}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <code className="px-2 py-1 bg-default-100 rounded text-sm">
+                          :{cmd.shortName}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <code className="px-2 py-1 bg-default-100 rounded text-xs max-w-md truncate block">
+                          {cmd.handler}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          isIconOnly
+                          aria-label={`Remove Ex command ${cmd.name}`}
+                          size="sm"
+                          variant="ghost"
+                          onPress={() => handleRemoveExCommand(index)}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </Card.Content>
       </Card>
@@ -372,9 +396,9 @@ export default function VimSettingsPage() {
           </p>
         </Card.Header>
         <Card.Content className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start">
             <Input
-              className="flex-1"
+              className="w-full md:flex-1"
               placeholder="Keys to unmap (e.g., jj)"
               value={newUnmappedKey.keys}
               onChange={(e) =>
@@ -386,7 +410,7 @@ export default function VimSettingsPage() {
             />
             <Select
               aria-label="Select mode"
-              className="w-40"
+              className="w-full md:w-40"
               placeholder="Mode"
               value={newUnmappedKey.mode ?? null}
               onChange={(value) => {
@@ -414,52 +438,61 @@ export default function VimSettingsPage() {
                 </ListBox>
               </Select.Popover>
             </Select>
-            <Button isIconOnly variant="outline" onPress={handleAddUnmappedKey}>
+            <Button
+              isIconOnly
+              aria-label="Add unmapped key"
+              className="self-end md:self-auto"
+              size="sm"
+              variant="ghost"
+              onPress={handleAddUnmappedKey}
+            >
               <PlusIcon className="w-5 h-5" />
             </Button>
           </div>
 
           {localConfig.unmappedKeys.length > 0 && (
-            <Table aria-label="Unmapped keys">
-              <TableHeader>
-                <TableColumn>KEYS</TableColumn>
-                <TableColumn>MODE</TableColumn>
-                <TableColumn>ACTIONS</TableColumn>
-              </TableHeader>
-              <TableBody>
-                {localConfig.unmappedKeys.map((unmapped, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-default-100 rounded text-sm">
-                        {unmapped.keys}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        color={
-                          unmapped.mode === "insert" ? "warning" : "accent"
-                        }
-                        size="sm"
-                        // variant="flat"
-                      >
-                        {unmapped.mode}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        isIconOnly
-                        // color="danger"
-                        size="sm"
-                        variant="ghost"
-                        onPress={() => handleRemoveUnmappedKey(index)}
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+              <Table aria-label="Unmapped keys">
+                <TableHeader>
+                  <TableColumn>KEYS</TableColumn>
+                  <TableColumn>MODE</TableColumn>
+                  <TableColumn>ACTIONS</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {localConfig.unmappedKeys.map((unmapped, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <code className="px-2 py-1 bg-default-100 rounded text-sm">
+                          {unmapped.keys}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          color={
+                            unmapped.mode === "insert" ? "warning" : "accent"
+                          }
+                          size="sm"
+                          variant="soft"
+                        >
+                          {unmapped.mode}
+                        </Chip>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          isIconOnly
+                          aria-label={`Remove unmapped key ${unmapped.keys}`}
+                          size="sm"
+                          variant="ghost"
+                          onPress={() => handleRemoveUnmappedKey(index)}
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </Card.Content>
       </Card>

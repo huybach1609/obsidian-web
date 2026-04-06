@@ -7,6 +7,7 @@ import { SunIcon, Undo2, UserIcon } from "lucide-react";
 import { Header, ListBox } from "@heroui/react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { VimLogoIcon } from "../icons/VimLogoIcon";
 
 /** Item id → next path (single source for navigation + selection sync). */
 const HREF_BY_ITEM_ID: Record<string, string> = {
@@ -53,7 +54,6 @@ export const SettingSideBarBottom = () => {
   return (
     <ListBox
       aria-label="Settings"
-      className="gap-0 divide-y overflow-visible p-[5px]"
       selectedKeys={selectedKeys}
       selectionMode="single"
       onSelectionChange={onSelectionChange}
@@ -68,7 +68,7 @@ export const SettingSideBarBottom = () => {
         </ListBox.Item>
         <ListBox.Item id="Vim mode" textValue="Vim mode">
           <div className={rowClass}>
-            <Image alt="Vim" height={16} src="/Vimlogo.svg" width={16} />
+            <VimLogoIcon />
             <span>Vim mode</span>
           </div>
         </ListBox.Item>

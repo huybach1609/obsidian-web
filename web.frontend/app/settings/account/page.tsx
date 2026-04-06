@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card, Input } from "@heroui/react";
+import { Button, Card, Input, toast } from "@heroui/react";
 
 import {
   AccountInfo,
@@ -9,6 +9,8 @@ import {
   LoginError,
   updateAccount,
 } from "@/services/authservice";
+import { useAppSettings } from "@/contexts/AppContext";
+import { XIcon } from "lucide-react";
 
 export default function AccountSettingsPage() {
   const [account, setAccount] = useState<AccountInfo | null>(null);
@@ -19,8 +21,15 @@ export default function AccountSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { setPageTitle } = useAppSettings();
 
   useEffect(() => {
+    setPageTitle({
+      title: "Account",
+      description: "Manage your username and password",
+      icon: null,
+    });
+
     let isMounted = true;
 
     const loadAccount = async () => {
@@ -81,7 +90,16 @@ export default function AccountSettingsPage() {
         setAccount({ ...account, username });
       }
     } catch (err) {
-      console.error("Failed to update account:", err);
+      toast("Failed to update account. Please try again.", {
+        actionProps: {
+          children: "Dismiss",
+          onPress: () => toast.clear(),
+          variant: "tertiary",
+        },
+        // description: "Failed to update account. Please try again.",
+        indicator: <XIcon />,
+        variant: "default",
+      });
       if (err instanceof LoginError) {
         setError(err.message);
       } else {
@@ -94,15 +112,6 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Account</h1>
-          <p className="text-foreground/60 mt-2">
-            Manage your username and password
-          </p>
-        </div>
-      </div>
-
       <Card>
         <Card.Header>
           <h2 className="text-xl font-semibold">Account details</h2>
