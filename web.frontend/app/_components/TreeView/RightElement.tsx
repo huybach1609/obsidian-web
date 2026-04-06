@@ -40,7 +40,7 @@ export function RightElement({
   };
 
   return (
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex items-center gap-1 md:opacity-0 opacity-100 group-hover:opacity-100 transition-opacity">
       {node.data.isDir && (
         <>
           <Dropdown className="before:bg-default-200 bg-background/90 text-foreground border-none backdrop-blur-xs">

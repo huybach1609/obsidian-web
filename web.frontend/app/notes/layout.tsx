@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter, useParams, usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { twMerge } from "tailwind-merge";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast, Button } from "@heroui/react";
 import {
   ArrowUpNarrowWideIcon,
@@ -14,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { LeftSideBarTop } from "@/app/_components/Bar/LeftSideBarTop";
+import { SidebarShell } from "@/app/_components/Layout/SidebarShell";
 import { CommandMenu } from "@/app/_components/CommandMenu";
 import CreatePageModal from "@/app/_components/Modal/CreatePageModal";
 import CreateFolderModal from "@/app/_components/Modal/CreateFolderModal";
@@ -32,7 +31,10 @@ import {
   createFolder,
 } from "@/services/fileservice";
 import { buildRenamedPath } from "@/utils/stringhelper";
+import { usePersistedSidebarWidth } from "@/hook/usePersistedSidebarWidth";
+import { useShellSidebarState } from "@/hook/useShellSidebarState";
 import { useSidebar } from "@/hook/useSidebar";
+import { useSidebarResize } from "@/hook/useSidebarResize";
 import { TreeViewRef } from "@/app/_components/TreeView";
 import { siteConfig } from "@/config/site";
 
@@ -48,36 +50,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const [createFolderPath, setCreateFolderPath] = useState<string>("");
   const treeViewRef = useRef<TreeViewRef>(null);
 
-  // Sidebar configuration - width is configurable (default: 256px)
-  // Initialize with default to avoid hydration mismatch
-  const [sidebarWidth, setSidebarWidth] = useState<number>(256);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Load from localStorage after hydration (client-side only)
-  useEffect(() => {
-    setIsHydrated(true);
-    const saved = localStorage.getItem("sidebar-width");
-
-    if (saved) {
-      const parsed = parseInt(saved, 10);
-
-      if (!isNaN(parsed) && parsed >= 200 && parsed <= 600) {
-        setSidebarWidth(parsed);
-      }
-    }
-  }, []);
-
-  // Save to localStorage when width changes (only after hydration)
-  useEffect(() => {
-    if (isHydrated) {
-      localStorage.setItem("sidebar-width", sidebarWidth.toString());
-    }
-  }, [sidebarWidth, isHydrated]);
-
-  // Resize handle state
-  const [isResizing, setIsResizing] = useState(false);
-  const resizeStartX = useRef<number>(0);
-  const resizeStartWidth = useRef<number>(0);
+  const { sidebarWidth, setSidebarWidth } = usePersistedSidebarWidth();
 
   // Extract the current path from route params (same logic as in page.tsx)
   const selectedPath = decodeURIComponent(
@@ -97,7 +70,6 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     router.push("/login");
   };
 
-  // Use sidebar hook for desktop logic
   const {
     isCollapsed: desktopCollapsed,
     sidebarRef,
@@ -110,66 +82,20 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     sidebarWidth: sidebarWidth,
   });
 
-  // Mobile sidebar open/close state (separate from desktop collapse logic)
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const isNarrow = isMobile || isWebView;
+  const {
+    isSidebarVisible,
+    isCollapsed,
+    toggleSidebar,
+    closeNarrowSidebar,
+    showNarrowBackdrop,
+  } = useShellSidebarState(isNarrow, {
+    isCollapsed: desktopCollapsed,
+    isSidebarVisible: desktopSidebarVisible,
+    toggle: desktopToggleSidebar,
+  });
 
-  const isSidebarVisible =
-    isMobile || isWebView ? isMobileSidebarOpen : desktopSidebarVisible;
-
-  const isCollapsed =
-    isMobile || isWebView ? !isMobileSidebarOpen : desktopCollapsed;
-
-  const toggleSidebar = () => {
-    if (isMobile || isWebView) {
-      setIsMobileSidebarOpen((prev) => !prev);
-    } else {
-      desktopToggleSidebar();
-    }
-  };
-
-  // Resize handlers
-  const handleResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    resizeStartX.current = e.clientX;
-    resizeStartWidth.current = sidebarWidth;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
-
-  const handleResizeMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      const diff = e.clientX - resizeStartX.current;
-      const newWidth = Math.max(
-        200,
-        Math.min(600, resizeStartWidth.current + diff),
-      );
-
-      setSidebarWidth(newWidth);
-    },
-    [isResizing],
-  );
-
-  const handleResizeEnd = useCallback(() => {
-    setIsResizing(false);
-    document.body.style.cursor = "";
-    document.body.style.userSelect = "";
-  }, []);
-
-  // Add global mouse event listeners for resizing
-  useEffect(() => {
-    if (isResizing) {
-      document.addEventListener("mousemove", handleResizeMove);
-      document.addEventListener("mouseup", handleResizeEnd);
-
-      return () => {
-        document.removeEventListener("mousemove", handleResizeMove);
-        document.removeEventListener("mouseup", handleResizeEnd);
-      };
-    }
-  }, [isResizing, handleResizeMove, handleResizeEnd]);
+  const { handleResizeStart } = useSidebarResize(sidebarWidth, setSidebarWidth);
 
   const handleRename = async (oldPath: string, newName: string) => {
     const newPath = buildRenamedPath(oldPath, newName);
@@ -338,30 +264,24 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     setCreatePagePath("");
   };
 
-  // Unified layout (desktop + mobile) with animated sidebar
   return (
-    <SidebarProvider toggleSidebar={toggleSidebar}>
-      <div
-        className={twMerge(
-          "flex h-screen bg-background text-foreground relative",
-          isCollapsed ? "flex-row" : "flex-col",
-        )}
-      >
+    <SidebarProvider
+      isSidebarOpen={isSidebarVisible}
+      toggleSidebar={toggleSidebar}
+    >
+      <SidebarShell.Root isCollapsed={isCollapsed}>
         <CommandMenu />
 
-        {/* Left Sidebar - Animated with Framer Motion, remains mounted when collapsed */}
-        {/* Animation: Uses translateX to slide in/out, not width changes */}
-        <motion.div
-          ref={sidebarRef}
+        <SidebarShell.MobileBackdrop
+          show={showNarrowBackdrop}
+          onClose={closeNarrowSidebar}
+        />
+
+        <SidebarShell.Sidebar
           animate={isSidebarVisible ? "expanded" : "collapsed"}
-          className={twMerge(
-            "bg-background flex flex-col fixed left-0 z-40",
-            isCollapsed
-              ? "bg-background/80 rounded-r-lg w-10 h-[90%] border-1 border-foreground/20 top-1/2 -translate-y-1/2"
-              : "top-0 bottom-0",
-          )}
-          initial={false}
-          style={{ width: sidebarWidth }}
+          isCollapsed={isCollapsed}
+          sidebarRef={sidebarRef}
+          sidebarWidth={sidebarWidth}
           variants={sidebarVariants}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -369,7 +289,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
           <LeftSideBarTop
             handleLogout={handleLogout}
             isCollapsed={isCollapsed}
-            isMobile={isMobile || isWebView}
+            isMobile={isNarrow}
             onToggleSidebar={toggleSidebar}
           />
 
@@ -379,7 +299,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
             onCreateFolder={() => handleOpenCreateFolder("/")}
           />
 
-          <div className="flex-1 min-h-0">
+          <div className="min-h-0 flex-1">
             <TreeView
               ref={treeViewRef}
               isAuthenticated={true}
@@ -416,38 +336,18 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
             />
           </div>
 
-          {/* Resize Handle (desktop only) */}
-          {!isCollapsed && !isMobile && !isWebView && (
-            <button
-              aria-label="Resize sidebar"
-              className="absolute right-0 top-0 bottom-0 w-3 cursor-col-resize hover:w-1.5 hover:bg-accent/30 transition-all z-50 group"
-              style={{ touchAction: "none" }}
-              type="button"
-              onMouseDown={handleResizeStart}
-            >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-12 bg-foreground/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-          )}
-        </motion.div>
+          <SidebarShell.ResizeHandle
+            show={!isCollapsed && !isNarrow}
+            onMouseDown={handleResizeStart}
+          />
+        </SidebarShell.Sidebar>
 
-        {/* Main Content Area - Smoothly adjusts based on sidebar state */}
-        <motion.div
-          className="flex-1 min-w-0"
-          style={{
-            // On desktop, shift content when sidebar is visible.
-            // On mobile, keep content full width and let sidebar overlay.
-            marginLeft:
-              !isMobile && !isWebView && isSidebarVisible ? sidebarWidth : 0,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 100,
-            damping: 70,
-          }}
+        <SidebarShell.Main
+          marginLeft={!isNarrow && isSidebarVisible ? sidebarWidth : 0}
         >
           {children}
-        </motion.div>
-      </div>
+        </SidebarShell.Main>
+      </SidebarShell.Root>
     </SidebarProvider>
   );
 }

@@ -56,6 +56,7 @@
         /* Border Radius */
         --radius: 0.75rem;
         --field-radius: 1rem;
+        --modal-radius: 1.75rem;
 
         /* Font Family */
         /* Make sure to load Figtree font in your app */

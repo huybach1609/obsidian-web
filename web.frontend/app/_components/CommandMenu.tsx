@@ -3,18 +3,16 @@
 import type { FileIndexDto } from "@/types/FileIndexDto";
 import type { Selection } from "@react-types/shared";
 
-import { Input, ListBox, Modal, useOverlayState } from "@heroui/react";
-import { Button as AriaButton } from "react-aria-components";
+import { Input, ListBox } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
-import { VisuallyHidden } from "@react-aria/visually-hidden";
 import { useRouter } from "next/navigation";
 
+import { AppModal } from "@/app/_components/Modal/AppModal";
 import { useFileSearch } from "@/hook/useFileSearch";
 import { useAppSettings } from "@/contexts/AppContext";
 
 export const CommandMenu = () => {
   const [open, setOpen] = useState(false);
-  const modalState = useOverlayState({ isOpen: open, onOpenChange: setOpen });
   const [inputValue, setInputValue] = useState("");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const { setQuery, results } = useFileSearch();
@@ -66,13 +64,6 @@ export const CommandMenu = () => {
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      setOpen(false);
-
-      return;
-    }
-
     if (results.length === 0) return;
 
     if (e.key === "ArrowDown") {
@@ -125,6 +116,10 @@ export const CommandMenu = () => {
     router.push(targetPath);
   };
 
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   const handleSelectionChange = (keys: Selection) => {
     if (keys === "all") return;
     const key = Array.from(keys)[0] as string;
@@ -136,77 +131,60 @@ export const CommandMenu = () => {
   };
 
   return (
-    <Modal state={modalState}>
-      {/* DialogTrigger / PressResponder needs a child that registers usePress; overlay is null when closed. */}
-      <AriaButton
-        aria-hidden
-        className="pointer-events-none sr-only"
-        type="button"
-      >
-        <span className="sr-only">{"\u200b"}</span>
-      </AriaButton>
-      <Modal.Backdrop isDismissable={false} variant="blur">
-        <Modal.Container className="" placement="center">
-          <Modal.Dialog className="bg-background/90 p-3 rounded-[1.75rem]">
-            <VisuallyHidden>
-              <h2>Command Palette</h2>
-            </VisuallyHidden>
+    <AppModal.Root closeOnBackdropClick isOpen={open} onClose={handleClose}>
+      <AppModal.Backdrop className="bg-background/50 backdrop-blur-[2px]" />
+      <AppModal.Panel className="w-full max-w-2xl rounded-[1.75rem] border border-default-200 bg-background/90 shadow-2xl">
+        <AppModal.Title>Command Palette</AppModal.Title>
 
-            <Modal.Header className="flex flex-col gap-1 p-0 m-0">
-              <Input
-                ref={inputRef}
-                placeholder="Search notes..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </Modal.Header>
+        <div className="flex flex-col gap-1">
+          <Input
+            ref={inputRef}
+            placeholder="Search notes..."
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
 
-            <Modal.Body className="p-0 m-0">
-              {results.length === 0 && inputValue && (
-                <div className="text-center py-8 text-neutral-500 text-sm">
-                  No results found.
-                </div>
-              )}
+        {results.length === 0 && inputValue && (
+          <div className="text-center py-8 text-neutral-500 text-sm">
+            No results found.
+          </div>
+        )}
 
-              {results.length > 0 && (
-                <div className=" mt-2 bg-transparent">
-                  <div className="text-xs font-medium text-neutral-400 mb-2 px-2">
-                    FILES
+        {results.length > 0 && (
+          <div className="mt-2 bg-transparent">
+            <div className="text-xs font-medium text-neutral-400 mb-2 px-2">
+              FILES
+            </div>
+            <ListBox
+              aria-label="File search results"
+              className="max-h-[60vh] overflow-y-auto bg-transparent"
+              selectedKeys={selectedKey ? new Set([selectedKey]) : new Set()}
+              selectionMode="single"
+              onSelectionChange={handleSelectionChange}
+            >
+              {results.map((file: FileIndexDto) => (
+                <ListBox.Item
+                  key={file.filePath}
+                  className=" text-sm rounded-lg data-[hover=true]:bg-accent/10 data-[selected=true]:bg-accent/10 cursor-pointer transition-colors"
+                  id={file.filePath}
+                  textValue={`${file.fileName} ${file.filePath}`}
+                >
+                  <div className="flex flex-col  gap-2">
+                    <div className="text-foreground font-medium ">
+                      {file.fileName}
+                    </div>
+                    <div className="text-foreground/80 text-xs ">
+                      {file.filePath}
+                    </div>
                   </div>
-                  <ListBox
-                    aria-label="File search results"
-                    className="max-h-[60vh] overflow-y-auto bg-transparent"
-                    selectedKeys={
-                      selectedKey ? new Set([selectedKey]) : new Set()
-                    }
-                    selectionMode="single"
-                    onSelectionChange={handleSelectionChange}
-                  >
-                    {results.map((file: FileIndexDto) => (
-                      <ListBox.Item
-                        key={file.filePath}
-                        className=" text-sm rounded-lg data-[hover=true]:bg-accent/10 data-[selected=true]:bg-accent/10 cursor-pointer transition-colors"
-                        id={file.filePath}
-                        textValue={`${file.fileName} ${file.filePath}`}
-                      >
-                        <div className="flex flex-col  gap-2">
-                          <div className="text-foreground font-medium ">
-                            {file.fileName}
-                          </div>
-                          <div className="text-foreground/80 text-xs ">
-                            {file.filePath}
-                          </div>
-                        </div>
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </div>
-              )}
-            </Modal.Body>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </div>
+        )}
+      </AppModal.Panel>
+    </AppModal.Root>
   );
 };

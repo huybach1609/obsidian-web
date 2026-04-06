@@ -74,8 +74,12 @@ export default function NotesPage() {
       const { markdown: md } = await getFileMarkdown(filePath);
 
       setMarkdown(md);
-    } catch (error) {
-      console.error("Error loading file:", error);
+    } catch {
+      toast("Error loading file", {
+        description: "Could not fetch the file from the server.",
+        timeout: 4000,
+        variant: "danger",
+      });
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,10 @@
 "use client";
 
 import { Button, Input } from "@heroui/react";
-import { useState, useEffect, useCallback, useId, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Save, X } from "lucide-react";
+
+import { AppModal } from "@/app/_components/Modal/AppModal";
 
 interface CreateFolderModalProps {
   isOpen: boolean;
@@ -21,13 +22,7 @@ export default function CreateFolderModal({
 }: CreateFolderModalProps) {
   const [folderNameError, setFolderNameError] = useState<string>("");
   const [folderName, setFolderName] = useState<string>("");
-  const [mounted, setMounted] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const titleId = useId();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Reset form when the modal opens
   useEffect(() => {
@@ -86,29 +81,6 @@ export default function CreateFolderModal({
     }
   }, [folderName, onSave, validateFolderName]);
 
-  // Escape to close, lock body scroll while open
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        handleCloseClick();
-      }
-    };
-
-    const prevOverflow = document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKeyDown, true);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown, true);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isOpen, handleCloseClick]);
-
   // Focus the panel when opened (focus moves inside dialog for a11y)
   useEffect(() => {
     if (!isOpen) return;
@@ -123,30 +95,14 @@ export default function CreateFolderModal({
     return () => window.clearTimeout(t);
   }, [isOpen]);
 
-  if (!mounted || !isOpen) {
-    return null;
-  }
-
-  return createPortal(
-    <div
-      aria-labelledby={titleId}
-      aria-modal="true"
-      className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
-      role="dialog"
-    >
-      {/* Backdrop — not clickable to dismiss (same as previous isDismissable={false}) */}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-background/50 backdrop-blur-[2px]"
-      />
-
-      <div
+  return (
+    <AppModal.Root isOpen={isOpen} onClose={handleCloseClick}>
+      <AppModal.Backdrop className="bg-background/50 backdrop-blur-[2px]" />
+      <AppModal.Panel
         ref={panelRef}
-        className="relative z-[1] w-full max-w-lg rounded-[var(--radius)] border border-default-200 bg-background p-4 shadow-2xl outline-none"
+        className="w-full max-w-lg  border border-default-200 bg-background p-2 shadow-2xl"
       >
-        <h2 className="sr-only" id={titleId}>
-          Create folder
-        </h2>
+        <AppModal.Title>Create folder</AppModal.Title>
         <div className="flex items-center gap-2">
           <Input
             aria-label="Folder name"
@@ -177,8 +133,7 @@ export default function CreateFolderModal({
             </Button>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body,
+      </AppModal.Panel>
+    </AppModal.Root>
   );
 }
