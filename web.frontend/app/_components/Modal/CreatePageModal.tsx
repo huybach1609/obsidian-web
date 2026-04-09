@@ -21,7 +21,7 @@ import dynamic from "next/dynamic";
 import { Save, X } from "lucide-react";
 
 import { AppModal } from "@/app/_components/Modal/AppModal";
-import { useAppSettings } from "@/contexts/AppContext";
+import { useEditorSettings, useUiPrefsSettings } from "@/contexts/AppContext";
 
 // Dynamic import to avoid SSR issues
 const CodeMirrorEditor = dynamic(
@@ -57,7 +57,8 @@ export default function CreatePageModal({
   const [fileName, setFileName] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const { theme } = useTheme();
-  const { vimMode, vimConfig } = useAppSettings();
+  const { vimMode } = useUiPrefsSettings();
+  const { vimConfig } = useEditorSettings();
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // Reset form when modal opens/closes

@@ -14,7 +14,7 @@ import {
   registerInitialAccount,
 } from "@/services/authservice";
 import {
-  useAppSettings,
+  useAuthSettings,
   getTokenFromCookie,
   getLastVisitedPathFromCookie,
 } from "@/contexts/AppContext";
@@ -22,7 +22,7 @@ import { siteConfig } from "@/config/site";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { accessToken, setAccessToken } = useAppSettings();
+  const { accessToken, setAccessToken } = useAuthSettings();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -157,6 +157,7 @@ export default function LoginPage() {
             <Input
               fullWidth
               required
+              aria-label="Username"
               autoComplete="username"
               disabled={loggingIn}
               placeholder="Username"
@@ -165,7 +166,11 @@ export default function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
             />
 
-            <TextField fullWidth variant="primary">
+            <TextField
+              fullWidth
+              aria-label={isInitialAccountMode ? "New password" : "Password"}
+              variant="primary"
+            >
               <InputGroup fullWidth variant="primary">
                 <InputGroup.Input
                   required
@@ -208,7 +213,11 @@ export default function LoginPage() {
             </TextField>
 
             {isInitialAccountMode && (
-              <TextField fullWidth variant="secondary">
+              <TextField
+                fullWidth
+                aria-label="Confirm password"
+                variant="secondary"
+              >
                 <InputGroup fullWidth variant="secondary">
                   <InputGroup.Input
                     required

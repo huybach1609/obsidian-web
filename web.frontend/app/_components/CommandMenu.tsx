@@ -1,15 +1,13 @@
 "use client";
 
-import type { FileIndexDto } from "@/types/FileIndexDto";
-import type { Selection } from "@react-types/shared";
-
-import { Input, ListBox } from "@heroui/react";
-import { useEffect, useRef, useState } from "react";
+import { Input } from "@heroui/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { AppModal } from "@/app/_components/Modal/AppModal";
+import { CommandMenuResultsList } from "@/app/_components/CommandMenuResultsList";
 import { useFileSearch } from "@/hook/useFileSearch";
-import { useAppSettings } from "@/contexts/AppContext";
+import { useUiPrefsSettings } from "@/contexts/AppContext";
 
 export const CommandMenu = () => {
   const [open, setOpen] = useState(false);
@@ -62,29 +60,46 @@ export const CommandMenu = () => {
     };
   }, [inputValue, setQuery]);
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (results.length === 0) return;
+  const { setLastVisitedPath } = useUiPrefsSettings();
 
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      // If nothing selected, select first item
-      if (!selectedKey) {
-        setSelectedKey(results[0].filePath);
-      } else {
+  const handleSelect = useCallback(
+    (filePath: string) => {
+      setOpen(false);
+      const targetPath = `/notes/${filePath}`;
+
+      setLastVisitedPath(targetPath);
+      router.push(targetPath);
+    },
+    [router, setLastVisitedPath],
+  );
+
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (results.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!selectedKey) {
+          setSelectedKey(results[0].filePath);
+
+          return;
+        }
+
         const currentIndex = results.findIndex(
           (f) => f.filePath === selectedKey,
         );
         const nextIndex = (currentIndex + 1) % results.length;
 
         setSelectedKey(results[nextIndex].filePath);
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      // If nothing selected, select last item
-      if (!selectedKey) {
-        setSelectedKey(results[results.length - 1].filePath);
-      } else {
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!selectedKey) {
+          setSelectedKey(results[results.length - 1].filePath);
+
+          return;
+        }
+
         const currentIndex = results.findIndex(
           (f) => f.filePath === selectedKey,
         );
@@ -92,43 +107,30 @@ export const CommandMenu = () => {
           currentIndex === 0 ? results.length - 1 : currentIndex - 1;
 
         setSelectedKey(results[prevIndex].filePath);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+
+        if (selectedKey) {
+          handleSelect(selectedKey);
+        } else {
+          handleSelect(results[0].filePath);
+        }
       }
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      // If item is selected, navigate to it
-      if (selectedKey) {
-        handleSelect(selectedKey);
-      }
-      // If no item selected but results exist, select first item
-      else if (results.length > 0) {
-        handleSelect(results[0].filePath);
-      }
-    }
-  };
+    },
+    [handleSelect, results, selectedKey],
+  );
 
-  const { setLastVisitedPath } = useAppSettings();
-
-  const handleSelect = (filePath: string) => {
-    setOpen(false);
-    const targetPath = `/notes/${filePath}`;
-
-    setLastVisitedPath(targetPath);
-    router.push(targetPath);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleSelectionChange = (keys: Selection) => {
-    if (keys === "all") return;
-    const key = Array.from(keys)[0] as string;
-
-    if (key) {
+  const handleSelectionChange = useCallback(
+    (key: string) => {
       setSelectedKey(key);
       handleSelect(key);
-    }
-  };
+    },
+    [handleSelect],
+  );
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+  }, []);
 
   return (
     <AppModal.Root closeOnBackdropClick isOpen={open} onClose={handleClose}>
@@ -157,31 +159,11 @@ export const CommandMenu = () => {
             <div className="text-xs font-medium text-neutral-400 mb-2 px-2">
               FILES
             </div>
-            <ListBox
-              aria-label="File search results"
-              className="max-h-[60vh] overflow-y-auto bg-transparent"
-              selectedKeys={selectedKey ? new Set([selectedKey]) : new Set()}
-              selectionMode="single"
-              onSelectionChange={handleSelectionChange}
-            >
-              {results.map((file: FileIndexDto) => (
-                <ListBox.Item
-                  key={file.filePath}
-                  className=" text-sm rounded-lg data-[hover=true]:bg-accent/10 data-[selected=true]:bg-accent/10 cursor-pointer transition-colors"
-                  id={file.filePath}
-                  textValue={`${file.fileName} ${file.filePath}`}
-                >
-                  <div className="flex flex-col  gap-2">
-                    <div className="text-foreground font-medium ">
-                      {file.fileName}
-                    </div>
-                    <div className="text-foreground/80 text-xs ">
-                      {file.filePath}
-                    </div>
-                  </div>
-                </ListBox.Item>
-              ))}
-            </ListBox>
+            <CommandMenuResultsList
+              results={results}
+              selectedKey={selectedKey}
+              onSelect={handleSelectionChange}
+            />
           </div>
         )}
       </AppModal.Panel>

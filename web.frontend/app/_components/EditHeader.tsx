@@ -12,7 +12,7 @@ import { twMerge } from "tailwind-merge";
 
 import Header from "./Header";
 
-import { useAppSettings } from "@/contexts/AppContext";
+import { useUiPrefsSettings } from "@/contexts/AppContext";
 import { useEditPage } from "@/contexts/EditPageContext";
 import { decodePathParam } from "@/utils/stringhelper";
 import { VimLogoIcon } from "@/app/_components/icons/VimLogoIcon";
@@ -25,7 +25,7 @@ export default function EditHeader() {
     params.path as string | string[] | undefined,
   );
   const router = useRouter();
-  const { vimMode, setVimMode } = useAppSettings();
+  const { vimMode, setVimMode } = useUiPrefsSettings();
   const { hasChanges, isSaving, onSave } = useEditPage();
   const { isMobile, isWebView } = usePlatform();
   const sidebar = useSidebarContext();

@@ -17,7 +17,7 @@ import AnimatedContent from "@/app/_components/AnimatedContent";
 import Header from "@/app/_components/Header";
 import { getFileMarkdown, toggleCheckbox } from "@/services/fileservice";
 import { MarkdownContent } from "@/lib/markdown/MarkdownContent";
-import { useAppSettings } from "@/contexts/AppContext";
+import { useEditorSettings } from "@/contexts/AppContext";
 import { siteConfig } from "@/config/site";
 import { getVaultImageUrl, isVaultImagePath } from "@/lib/parseObsidian";
 import { usePlatform } from "@/contexts/PlatformContext";
@@ -54,7 +54,7 @@ export default function NotesPage() {
   );
   const { isMobile, isWebView } = usePlatform();
   const sidebar = useSidebarContext();
-  const { fileIndex } = useAppSettings();
+  const { fileIndex } = useEditorSettings();
 
   const [loading, setLoading] = useState(false);
   const [markdown, setMarkdown] = useState("");

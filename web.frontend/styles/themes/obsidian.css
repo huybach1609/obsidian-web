@@ -131,9 +131,12 @@
         --warning: oklch(82.03% 0.1434 78.39);
         --warning-foreground: oklch(21.03% 0.0059 78.39);
 
-        /* Match light theme so portaled UI (e.g. modals) always resolves `--radius`. */
+
+           /* Border Radius */
         --radius: 0.75rem;
         --field-radius: 1rem;
+        --modal-radius: 1.75rem;
+
 
         /* Markdown variables — derived from dark theme hue 270.88 */
         /* bg: just above --surface, same hue */

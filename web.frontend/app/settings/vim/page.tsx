@@ -18,7 +18,10 @@ import {
 } from "@heroui/react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
-import { useAppSettings } from "@/contexts/AppContext";
+import {
+  useEditorSettings,
+  useUiPrefsSettings,
+} from "@/contexts/AppContext";
 import {
   VimConfig,
   VimKeyMapping,
@@ -28,8 +31,8 @@ import {
 import { VimLogoIcon } from "@/app/_components/icons/VimLogoIcon";
 
 export default function VimSettingsPage() {
-  const { setPageTitle, vimMode, setVimMode, vimConfig, setVimConfig } =
-    useAppSettings();
+  const { setPageTitle, vimConfig, setVimConfig } = useEditorSettings();
+  const { vimMode, setVimMode } = useUiPrefsSettings();
   const [localConfig, setLocalConfig] = useState<VimConfig>(vimConfig);
   const [newKeyMapping, setNewKeyMapping] = useState<Partial<VimKeyMapping>>({
     keys: "",

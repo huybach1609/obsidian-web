@@ -4,10 +4,10 @@ import type { FileIndexDto } from "@/types/FileIndexDto";
 import Fuse from "fuse.js";
 import { useMemo, useState } from "react";
 
-import { useAppSettings } from "@/contexts/AppContext";
+import { useEditorSettings } from "@/contexts/AppContext";
 
 export const useFileSearch = () => {
-  const { fileIndex } = useAppSettings();
+  const { fileIndex } = useEditorSettings();
 
   const [query, setQuery] = useState("");
 

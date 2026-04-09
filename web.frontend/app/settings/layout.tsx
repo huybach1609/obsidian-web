@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { LeftSideBarTop } from "@/app/_components/Bar/LeftSideBarTop";
 import { SidebarShell } from "@/app/_components/Layout/SidebarShell";
 import { SettingSideBarBottom } from "@/app/_components/Bar/SettingSideBarBottom";
-import { useAppSettings } from "@/contexts/AppContext";
+import { useAuthSettings, useEditorSettings } from "@/contexts/AppContext";
 import { usePlatform } from "@/contexts/PlatformContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { usePersistedSidebarWidth } from "@/hook/usePersistedSidebarWidth";
@@ -19,7 +19,8 @@ import { PanelLeftIcon } from "lucide-react";
 const SettingsLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { isMobile, isWebView } = usePlatform();
-  const { setAccessToken, pageTitle, setPageTitle } = useAppSettings();
+  const { setAccessToken } = useAuthSettings();
+  const { pageTitle } = useEditorSettings();
   const { sidebarWidth, setSidebarWidth } = usePersistedSidebarWidth();
   const handleLogout = () => {
     setAccessToken(null);

@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 
 import Header from "../Header";
 
-import { useAppSettings } from "@/contexts/AppContext";
+import { useUiPrefsSettings } from "@/contexts/AppContext";
 
 export const LeftSideBarTop = ({
   handleLogout,
@@ -28,7 +28,7 @@ export const LeftSideBarTop = ({
 }) => {
   const router = useRouter();
   const { theme, resolvedTheme } = useTheme();
-  const { setThemeMode, editMode, setEditMode } = useAppSettings();
+  const { setThemeMode, editMode, setEditMode } = useUiPrefsSettings();
   // const isSSR = useIsSSR();
   const activeTheme = (resolvedTheme ?? theme ?? "obsidian") as
     | "obsidian"

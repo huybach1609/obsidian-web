@@ -17,7 +17,7 @@ import { CommandMenu } from "@/app/_components/CommandMenu";
 import CreatePageModal from "@/app/_components/Modal/CreatePageModal";
 import CreateFolderModal from "@/app/_components/Modal/CreateFolderModal";
 import TreeView from "@/app/_components/TreeView";
-import { useAppSettings } from "@/contexts/AppContext";
+import { useAuthSettings, useUiPrefsSettings } from "@/contexts/AppContext";
 import {
   CreatePageProvider,
   useCreatePage,
@@ -43,7 +43,8 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const pathname = usePathname();
   const { isMobile, isWebView } = usePlatform();
-  const { setAccessToken, editMode, setLastVisitedPath } = useAppSettings();
+  const { setAccessToken } = useAuthSettings();
+  const { editMode, setLastVisitedPath } = useUiPrefsSettings();
   const { setIsOpen, isOpen } = useCreatePage();
   const [createPagePath, setCreatePagePath] = useState<string>("");
   const [isFolderModalOpen, setIsFolderModalOpen] = useState<boolean>(false);

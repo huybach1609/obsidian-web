@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card, Input, toast } from "@heroui/react";
+import { XIcon } from "lucide-react";
 
 import {
   AccountInfo,
@@ -9,8 +10,7 @@ import {
   LoginError,
   updateAccount,
 } from "@/services/authservice";
-import { useAppSettings } from "@/contexts/AppContext";
-import { XIcon } from "lucide-react";
+import { useEditorSettings } from "@/contexts/AppContext";
 
 export default function AccountSettingsPage() {
   const [account, setAccount] = useState<AccountInfo | null>(null);
@@ -21,7 +21,7 @@ export default function AccountSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { setPageTitle } = useAppSettings();
+  const { setPageTitle } = useEditorSettings();
 
   useEffect(() => {
     setPageTitle({
