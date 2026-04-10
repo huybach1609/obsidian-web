@@ -40,8 +40,13 @@ export default function LoginPage() {
         setAccessToken(token);
       }
       const lastPath = getLastVisitedPathFromCookie();
+      const sanitizedPath = lastPath
+        ? lastPath.replace(/[\u0000-\u001F\u007F]/g, "").trim()
+        : null;
       const redirectPath =
-        lastPath && lastPath.startsWith("/notes") ? lastPath : "/notes";
+        sanitizedPath && sanitizedPath.startsWith("/notes")
+          ? sanitizedPath
+          : "/notes";
 
       router.push(redirectPath);
     }

@@ -10,10 +10,7 @@ import { getFile, updateFile } from "@/services/fileservice";
 import { siteConfig } from "@/config/site";
 import { decodePathParam } from "@/utils/stringhelper";
 import { getVaultImageUrl, isVaultImagePath } from "@/lib/parseObsidian";
-import {
-  useEditorSettings,
-  useUiPrefsSettings,
-} from "@/contexts/AppContext";
+import { useEditorSettings, useUiPrefsSettings } from "@/contexts/AppContext";
 import { useEditPage } from "@/contexts/EditPageContext";
 
 // Dynamic import to avoid SSR issues

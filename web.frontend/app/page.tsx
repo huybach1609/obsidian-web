@@ -22,8 +22,15 @@ export default async function Home() {
       // ignore malformed cookie encoding
     }
 
+    // Prevent invalid Location headers from malformed cookie values
+    // (e.g. CR/LF control chars in production container logs).
+    const sanitizedPath = lastPath
+      ? lastPath.replace(/[\u0000-\u001F\u007F]/g, "").trim()
+      : null;
     const redirectPath =
-      lastPath && lastPath.startsWith("/notes") ? lastPath : "/notes";
+      sanitizedPath && sanitizedPath.startsWith("/notes")
+        ? sanitizedPath
+        : "/notes";
 
     redirect(redirectPath);
   }
