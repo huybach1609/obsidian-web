@@ -101,6 +101,34 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGuestLogin() {
+    setError(null);
+    setLoggingIn(true);
+
+    try {
+      const response = await fetch("/api/auth/guest", {
+        method: "POST",
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { token?: string; message?: string }
+        | null;
+
+      if (!response.ok || !data?.token) {
+        throw new Error(data?.message || "Demo sign in failed.");
+      }
+
+      setAccessToken(data.token);
+      setAuthToken(data.token);
+      router.push("/");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Demo sign in failed.";
+      setError(message);
+    } finally {
+      setLoggingIn(false);
+    }
+  }
+
   const { name, description } = siteConfig;
 
   return (
@@ -291,6 +319,17 @@ export default function LoginPage() {
                   ? "Create initial account"
                   : "Sign in"}
             </Button>
+            {!isInitialAccountMode && (
+              <Button
+                className="w-full"
+                isDisabled={loggingIn}
+                type="button"
+                variant="secondary"
+                onPress={handleGuestLogin}
+              >
+                {loggingIn ? "Signing in..." : "Try demo account"}
+              </Button>
+            )}
           </form>
         </div>
       </section>
