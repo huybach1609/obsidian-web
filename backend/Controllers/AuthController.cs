@@ -16,11 +16,14 @@ namespace backend.Controllers
         private readonly string _jwtKey;
         private readonly string _configPath;
         private readonly CredentialConfig? _credentialConfig;
+        private readonly bool _isDemo;
 
         public AuthController(IConfiguration configuration)
         {
             _jwtKey = configuration["JWT_SECRET"]
                       ?? throw new EmptyConfigurationValueException("JWT_SECRET is not configured in environment variables.");
+            _isDemo = configuration.GetValue<bool>("Demo:IsDemo")
+                     || configuration.GetValue<bool>("IS_DEMO");
 
             // Path to the Obsidian vault config file that stores credentials.
             // Vault root comes from appsettings.json: "vault": { "root": "/vault" }.
@@ -42,6 +45,20 @@ namespace backend.Controllers
             {
                 _credentialConfig = null;
             }
+        }
+
+        private IActionResult? BlockWriteInDemo()
+        {
+            if (!_isDemo)
+            {
+                return null;
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                error = "DemoModeReadOnly",
+                message = "Account changes are disabled in demo mode."
+            });
         }
 
         // POST /api/login
@@ -87,7 +104,7 @@ namespace backend.Controllers
                 return NotFound(new { error = "CredentialsNotConfigured" });
             }
 
-            return Ok(new { username = _credentialConfig.Username });
+            return Ok(new { username = _credentialConfig.Username, isDemo = _isDemo });
         }
 
         // POST /api/account
@@ -96,6 +113,9 @@ namespace backend.Controllers
         [Authorize]
         public IActionResult UpdateAccount([FromBody] UpdateAccountRequest req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             if (string.IsNullOrWhiteSpace(req.CurrentPassword))
             {
                 return BadRequest(new { error = "CurrentPasswordRequired" });
@@ -155,6 +175,9 @@ namespace backend.Controllers
         [AllowAnonymous]
         public IActionResult Register([FromBody] RegisterRequest req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             if (string.IsNullOrWhiteSpace(req.Username) || string.IsNullOrWhiteSpace(req.Password))
             {
                 return BadRequest(new { error = "UsernameAndPasswordRequired" });

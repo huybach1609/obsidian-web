@@ -12,12 +12,15 @@ namespace backend.Controllers
     {
         private readonly string _vaultRoot;
         private const string ConfigPath = ".obsidian-web/config-vim.json";
+        private readonly bool _isDemo;
 
         public VimConfigController(IConfiguration configuration)
         {
             _vaultRoot = configuration["Vault:Root"]
                          ?? configuration["VAULT_ROOT"]
                          ?? "/vault";
+            _isDemo = configuration.GetValue<bool>("Demo:IsDemo")
+                     || configuration.GetValue<bool>("IS_DEMO");
         }
 
         private string GetConfigFilePath()
@@ -32,24 +35,28 @@ namespace backend.Controllers
         public async Task<IActionResult> GetVimConfig()
         {
             var configFile = GetConfigFilePath();
+            var defaultConfig = new
+            {
+                keyMappings = Array.Empty<object>(),
+                exCommands = Array.Empty<object>(),
+                unmappedKeys = Array.Empty<object>(),
+                createdAt = DateTime.UtcNow.ToString("O"),
+                updatedAt = DateTime.UtcNow.ToString("O")
+            };
 
             // If file doesn't exist, create default config
             if (!System.IO.File.Exists(configFile))
             {
+                if (_isDemo)
+                {
+                    return Ok(defaultConfig);
+                }
+
                 var configDir = Path.GetDirectoryName(configFile);
                 if (!string.IsNullOrEmpty(configDir) && !Directory.Exists(configDir))
                 {
                     Directory.CreateDirectory(configDir);
                 }
-
-                var defaultConfig = new
-                {
-                    keyMappings = Array.Empty<object>(),
-                    exCommands = Array.Empty<object>(),
-                    unmappedKeys = Array.Empty<object>(),
-                    createdAt = DateTime.UtcNow.ToString("O"),
-                    updatedAt = DateTime.UtcNow.ToString("O")
-                };
 
                 var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions
                 {
@@ -76,6 +83,15 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> SaveVimConfig([FromBody] object configData)
         {
+            if (_isDemo)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    error = "DemoModeReadOnly",
+                    message = "Vim config updates are disabled in demo mode."
+                });
+            }
+
             var configFile = GetConfigFilePath();
             var configDir = Path.GetDirectoryName(configFile);
 

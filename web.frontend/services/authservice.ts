@@ -8,6 +8,7 @@ export interface LoginResponse {
 
 export interface AccountInfo {
   username: string;
+  isDemo?: boolean;
 }
 
 export class LoginError extends Error {

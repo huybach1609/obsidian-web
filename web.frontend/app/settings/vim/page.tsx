@@ -15,11 +15,13 @@ import {
   TableCell,
   Chip,
   Select,
+  toast,
 } from "@heroui/react";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 import {
   useEditorSettings,
+  useAuthSettings,
   useUiPrefsSettings,
 } from "@/contexts/AppContext";
 import {
@@ -29,9 +31,11 @@ import {
   VimMode,
 } from "@/types/vimConfig";
 import { VimLogoIcon } from "@/app/_components/icons/VimLogoIcon";
+import { DEMO_READ_ONLY_MESSAGE, isDemoReadOnlyError } from "@/utils/demoMode";
 
 export default function VimSettingsPage() {
   const { setPageTitle, vimConfig, setVimConfig } = useEditorSettings();
+  const { isDemoMode } = useAuthSettings();
   const { vimMode, setVimMode } = useUiPrefsSettings();
   const [localConfig, setLocalConfig] = useState<VimConfig>(vimConfig);
   const [newKeyMapping, setNewKeyMapping] = useState<Partial<VimKeyMapping>>({
@@ -64,11 +68,26 @@ export default function VimSettingsPage() {
   }, [vimConfig]);
 
   const handleSave = async () => {
+    if (isDemoMode) {
+      toast(DEMO_READ_ONLY_MESSAGE, { variant: "warning", timeout: 2500 });
+
+      return;
+    }
+
     try {
       await setVimConfig(localConfig);
+      toast("Vim config saved", { variant: "success", timeout: 1500 });
     } catch (error) {
       console.error("Failed to save vim config:", error);
-      // You might want to show a toast notification here
+      toast(
+        isDemoReadOnlyError(error)
+          ? DEMO_READ_ONLY_MESSAGE
+          : "Failed to save Vim config",
+        {
+          variant: isDemoReadOnlyError(error) ? "warning" : "danger",
+          timeout: 2500,
+        },
+      );
     }
   };
 
@@ -147,11 +166,22 @@ export default function VimSettingsPage() {
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-10 md:px-6">
       <div className="sticky top-0 z-20 -mx-4 border-b border-default-100 bg-background/85 px-4 py-3 backdrop-blur md:mx-0 md:rounded-t-lg md:px-0">
         <div className="flex items-center justify-end">
-          <Button className="font-semibold" onPress={handleSave}>
+          <Button
+            className="font-semibold"
+            isDisabled={isDemoMode}
+            onPress={handleSave}
+          >
             Save Configuration
           </Button>
         </div>
       </div>
+      {isDemoMode && (
+        <Card>
+          <Card.Content className="text-warning text-sm">
+            Demo mode is read-only. Vim config changes are disabled.
+          </Card.Content>
+        </Card>
+      )}
 
       {/* Vim Mode Toggle */}
       <Card>

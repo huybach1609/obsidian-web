@@ -37,13 +37,14 @@ import { useSidebar } from "@/hook/useSidebar";
 import { useSidebarResize } from "@/hook/useSidebarResize";
 import { TreeViewRef } from "@/app/_components/TreeView";
 import { siteConfig } from "@/config/site";
+import { DEMO_READ_ONLY_MESSAGE, isDemoReadOnlyError } from "@/utils/demoMode";
 
 function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
   const { isMobile, isWebView } = usePlatform();
-  const { setAccessToken } = useAuthSettings();
+  const { setAccessToken, isDemoMode } = useAuthSettings();
   const { editMode, setLastVisitedPath } = useUiPrefsSettings();
   const { setIsOpen, isOpen } = useCreatePage();
   const [createPagePath, setCreatePagePath] = useState<string>("");
@@ -99,6 +100,16 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
   const { handleResizeStart } = useSidebarResize(sidebarWidth, setSidebarWidth);
 
   const handleRename = async (oldPath: string, newName: string) => {
+    if (isDemoMode) {
+      toast("Rename disabled", {
+        description: DEMO_READ_ONLY_MESSAGE,
+        variant: "warning",
+        timeout: 2500,
+      });
+
+      return;
+    }
+
     const newPath = buildRenamedPath(oldPath, newName);
 
     try {
@@ -114,10 +125,27 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error("Failed to rename file", err);
+      toast("Rename failed", {
+        description: isDemoReadOnlyError(err)
+          ? DEMO_READ_ONLY_MESSAGE
+          : "Could not rename this item.",
+        variant: isDemoReadOnlyError(err) ? "warning" : "danger",
+        timeout: 2500,
+      });
     }
   };
 
   const handleRemoveFile = async (path: string) => {
+    if (isDemoMode) {
+      toast("Delete disabled", {
+        description: DEMO_READ_ONLY_MESSAGE,
+        variant: "warning",
+        timeout: 2500,
+      });
+
+      return;
+    }
+
     try {
       await removeFile(path);
 
@@ -148,12 +176,15 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
       });
     } catch (err) {
       console.error("Failed to delete file", err);
+      const description = isDemoReadOnlyError(err)
+        ? DEMO_READ_ONLY_MESSAGE
+        : err instanceof Error
+          ? err.message
+          : "An error occurred while deleting the file";
+
       toast("Failed to delete file", {
-        description:
-          err instanceof Error
-            ? err.message
-            : "An error occurred while deleting the file",
-        variant: "danger",
+        description,
+        variant: isDemoReadOnlyError(err) ? "warning" : "danger",
         timeout: 3000,
       });
     }
@@ -161,6 +192,16 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
 
   // set path
   const handleOpenCreatePage = (path: string) => {
+    if (isDemoMode) {
+      toast("Create disabled", {
+        description: DEMO_READ_ONLY_MESSAGE,
+        variant: "warning",
+        timeout: 2500,
+      });
+
+      return;
+    }
+
     console.log("open create page", path);
     setCreatePagePath(path);
     setIsOpen(true);
@@ -168,6 +209,16 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
 
   // Open create folder modal
   const handleOpenCreateFolder = (path: string) => {
+    if (isDemoMode) {
+      toast("Create disabled", {
+        description: DEMO_READ_ONLY_MESSAGE,
+        variant: "warning",
+        timeout: 2500,
+      });
+
+      return;
+    }
+
     console.log("open create folder", path);
     setCreateFolderPath(path);
     setIsFolderModalOpen(true);
@@ -175,6 +226,16 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
 
   // Save folder
   const handleSaveFolder = async (folderName: string) => {
+    if (isDemoMode) {
+      toast("Create disabled", {
+        description: DEMO_READ_ONLY_MESSAGE,
+        variant: "warning",
+        timeout: 2500,
+      });
+
+      return;
+    }
+
     try {
       const basePath = createFolderPath.endsWith("/")
         ? createFolderPath
@@ -200,12 +261,15 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
       setCreateFolderPath("");
     } catch (err) {
       // console.error("Failed to create folder", err);
+      const description = isDemoReadOnlyError(err)
+        ? DEMO_READ_ONLY_MESSAGE
+        : err instanceof Error
+          ? err.message
+          : "An error occurred while creating the folder";
+
       toast("Failed to create folder", {
-        description:
-          err instanceof Error
-            ? err.message
-            : "An error occurred while creating the folder",
-        variant: "danger",
+        description,
+        variant: isDemoReadOnlyError(err) ? "warning" : "danger",
         timeout: 3000,
       });
       throw err;
@@ -230,6 +294,18 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
     // console.log("save and close modal", createPagePath, fileName);
 
     if (createPagePath && fileName) {
+      if (isDemoMode) {
+        toast("Create disabled", {
+          description: DEMO_READ_ONLY_MESSAGE,
+          variant: "warning",
+          timeout: 2500,
+        });
+        setIsOpen(false);
+        setCreatePagePath("");
+
+        return;
+      }
+
       try {
         // Construct full path: basePath/fileName.md
         const basePath = createPagePath.endsWith("/")
@@ -259,6 +335,15 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
         });
       } catch (err) {
         console.error("Failed to create file", err);
+        toast("Failed to create file", {
+          description: isDemoReadOnlyError(err)
+            ? DEMO_READ_ONLY_MESSAGE
+            : err instanceof Error
+              ? err.message
+              : "An error occurred while creating the file",
+          variant: isDemoReadOnlyError(err) ? "warning" : "danger",
+          timeout: 3000,
+        });
       }
     }
     setIsOpen(false);
@@ -295,6 +380,7 @@ function NotesLayoutContent({ children }: { children: React.ReactNode }) {
           />
 
           <TreeActions
+            isDemoMode={isDemoMode}
             treeViewRef={treeViewRef}
             onCreateFile={() => handleOpenCreatePage("/")}
             onCreateFolder={() => handleOpenCreateFolder("/")}
@@ -366,12 +452,14 @@ export default function NotesLayout({
 }
 
 interface TreeActionsProps {
+  isDemoMode: boolean;
   onCreateFile: () => void;
   onCreateFolder: () => void;
   treeViewRef: React.RefObject<TreeViewRef | null>;
 }
 
 const TreeActions = ({
+  isDemoMode,
   onCreateFile,
   onCreateFolder,
   treeViewRef,
@@ -416,6 +504,7 @@ const TreeActions = ({
       <Button
         isIconOnly
         id="create-file"
+        isDisabled={isDemoMode}
         size="sm"
         variant="ghost"
         onPress={onCreateFile}
@@ -426,6 +515,7 @@ const TreeActions = ({
       <Button
         isIconOnly
         id="create-folder"
+        isDisabled={isDemoMode}
         size="sm"
         variant="ghost"
         onPress={onCreateFolder}

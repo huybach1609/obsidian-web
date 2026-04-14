@@ -10,7 +10,8 @@ import {
   LoginError,
   updateAccount,
 } from "@/services/authservice";
-import { useEditorSettings } from "@/contexts/AppContext";
+import { useAuthSettings, useEditorSettings } from "@/contexts/AppContext";
+import { DEMO_READ_ONLY_MESSAGE, isDemoReadOnlyError } from "@/utils/demoMode";
 
 export default function AccountSettingsPage() {
   const [account, setAccount] = useState<AccountInfo | null>(null);
@@ -22,6 +23,7 @@ export default function AccountSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { setPageTitle } = useEditorSettings();
+  const { isDemoMode } = useAuthSettings();
 
   useEffect(() => {
     setPageTitle({
@@ -63,6 +65,12 @@ export default function AccountSettingsPage() {
     setError(null);
     setSuccess(null);
 
+    if (isDemoMode) {
+      setError(DEMO_READ_ONLY_MESSAGE);
+
+      return;
+    }
+
     if (!currentPassword) {
       setError("Current password is required.");
 
@@ -90,20 +98,33 @@ export default function AccountSettingsPage() {
         setAccount({ ...account, username });
       }
     } catch (err) {
-      toast("Failed to update account. Please try again.", {
-        actionProps: {
-          children: "Dismiss",
-          onPress: () => toast.clear(),
-          variant: "tertiary",
+      const isDemoReadOnly = isDemoReadOnlyError(err);
+
+      toast(
+        isDemoReadOnly
+          ? DEMO_READ_ONLY_MESSAGE
+          : "Failed to update account. Please try again.",
+        {
+          actionProps: {
+            children: "Dismiss",
+            onPress: () => toast.clear(),
+            variant: "tertiary",
+          },
+          description: isDemoReadOnly
+            ? "Account changes are disabled in demo."
+            : undefined,
+          indicator: <XIcon />,
+          variant: "default",
         },
-        // description: "Failed to update account. Please try again.",
-        indicator: <XIcon />,
-        variant: "default",
-      });
+      );
       if (err instanceof LoginError) {
         setError(err.message);
       } else {
-        setError("Failed to update account. Please try again.");
+        setError(
+          isDemoReadOnly
+            ? DEMO_READ_ONLY_MESSAGE
+            : "Failed to update account. Please try again.",
+        );
       }
     } finally {
       setIsSaving(false);
@@ -157,11 +178,18 @@ export default function AccountSettingsPage() {
               {success}
             </div>
           )}
+          {isDemoMode && (
+            <div className="p-3 rounded-md border border-warning/20 bg-warning/10 text-warning text-sm">
+              Demo mode is read-only. Account updates are disabled.
+            </div>
+          )}
 
           <div className="flex justify-end">
             <Button
               className="font-semibold"
-              isDisabled={isSaving || !username || !currentPassword}
+              isDisabled={
+                isSaving || isDemoMode || !username || !currentPassword
+              }
               // isLoading={isSaving}
               onPress={handleSave}
             >

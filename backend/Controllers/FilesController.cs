@@ -1,4 +1,4 @@
-﻿using Markdig;
+using Markdig;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -13,6 +13,7 @@ namespace backend.Controllers
     {
         private readonly string _vaultRoot;
         private readonly IMemoryCache _cache;
+        private readonly bool _isDemo;
 
         public FilesController(IConfiguration configuration, IMemoryCache cache)
         {
@@ -20,6 +21,22 @@ namespace backend.Controllers
                          ?? configuration["VAULT_ROOT"]
                          ?? "/vault";
             _cache = cache;
+            _isDemo = configuration.GetValue<bool>("Demo:IsDemo")
+                     || configuration.GetValue<bool>("IS_DEMO");
+        }
+
+        private IActionResult? BlockWriteInDemo()
+        {
+            if (!_isDemo)
+            {
+                return null;
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                error = "DemoModeReadOnly",
+                message = "Write operations are disabled in demo mode."
+            });
         }
 
         private string SafePath(string relative)
@@ -152,6 +169,9 @@ namespace backend.Controllers
         [HttpPut("file")]
         public async Task<IActionResult> PutFile([FromBody] FileWrite req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             var full = SafePath(req.Path);
 
             Directory.CreateDirectory(Path.GetDirectoryName(full)!);
@@ -168,6 +188,9 @@ namespace backend.Controllers
         [HttpPost("file")]
         public async Task<IActionResult> PostFile([FromBody] FileWrite req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             var full = SafePath(req.Path);
 
             // Ensure the file has .md extension
@@ -201,6 +224,9 @@ namespace backend.Controllers
         [HttpPost("file/rename")]
         public IActionResult RenameFileOrFolder([FromBody] RenameRequest req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             if (string.IsNullOrWhiteSpace(req.OldPath) || string.IsNullOrWhiteSpace(req.NewPath))
             {
                 return BadRequest(new { error = "OldPath and NewPath are required" });
@@ -248,6 +274,9 @@ namespace backend.Controllers
         [HttpPost("file/move")]
         public IActionResult MoveFileOrFolder([FromBody] MoveRequest req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             if (string.IsNullOrWhiteSpace(req.SourcePath))
             {
                 return BadRequest(new { error = "SourcePath is required" });
@@ -335,6 +364,9 @@ namespace backend.Controllers
         [HttpPost("folder")]
         public IActionResult CreateFolder([FromBody] FolderCreate req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             var full = SafePath(req.Path);
 
             if (Directory.Exists(full))
@@ -354,6 +386,9 @@ namespace backend.Controllers
         [HttpDelete("file")]
         public IActionResult DeleteFile([FromQuery] string path)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             var full = SafePath(path);
 
             if (!System.IO.File.Exists(full) && !Directory.Exists(full))
@@ -438,6 +473,9 @@ namespace backend.Controllers
         [HttpPost("file/toggle-checkbox")]
         public async Task<IActionResult> ToggleCheckbox([FromBody] ToggleCheckboxRequest req)
         {
+            var blocked = BlockWriteInDemo();
+            if (blocked is not null) return blocked;
+
             var full = SafePath(req.Path);
 
             if (!System.IO.File.Exists(full))
