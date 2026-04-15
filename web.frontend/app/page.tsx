@@ -31,8 +31,9 @@ export default async function Home() {
       sanitizedPath && sanitizedPath.startsWith("/notes")
         ? sanitizedPath
         : "/notes";
+    const encodedRedirectPath = encodeURI(redirectPath);
 
-    redirect(redirectPath);
+    redirect(encodedRedirectPath);
   }
 
   redirect("/login");

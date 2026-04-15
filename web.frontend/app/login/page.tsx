@@ -9,6 +9,7 @@ import { ArrowRight, EyeIcon, EyeOffIcon } from "lucide-react";
 
 import { setAuthToken } from "@/lib/axios";
 import {
+  getDemoGuestCredentials,
   login,
   LoginError,
   registerInitialAccount,
@@ -106,23 +107,21 @@ export default function LoginPage() {
     setLoggingIn(true);
 
     try {
-      const response = await fetch("/api/auth/guest", {
-        method: "POST",
-      });
-      const data = (await response.json().catch(() => null)) as
-        | { token?: string; message?: string }
-        | null;
+      const demoData = await getDemoGuestCredentials();
 
-      if (!response.ok || !data?.token) {
-        throw new Error(data?.message || "Demo sign in failed.");
-      }
+      setUsername(demoData.username);
+      setPassword(demoData.password);
 
-      setAccessToken(data.token);
-      setAuthToken(data.token);
+      const authData = await login(demoData.username, demoData.password);
+
+      setAccessToken(authData.token);
+      setAuthToken(authData.token);
+
       router.push("/");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Demo sign in failed.";
+
       setError(message);
     } finally {
       setLoggingIn(false);

@@ -11,6 +11,11 @@ export interface AccountInfo {
   isDemo?: boolean;
 }
 
+export interface DemoGuestCredentials {
+  username: string;
+  password: string;
+}
+
 export class LoginError extends Error {
   constructor(
     message: string,
@@ -97,6 +102,30 @@ export async function updateAccount(
 
     throw new LoginError(
       apiError.message,
+      apiError.statusCode,
+      apiError.isNetworkError,
+    );
+  }
+}
+
+export async function getDemoGuestCredentials(): Promise<DemoGuestCredentials> {
+  try {
+    const { data } = await axios.get<DemoGuestCredentials>("/guest/demo");
+
+    if (!data?.username || !data?.password) {
+      throw new LoginError("Demo account is not available.");
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof LoginError) {
+      throw error;
+    }
+
+    const apiError = handleApiError(error);
+
+    throw new LoginError(
+      apiError.message || "Demo account is not available.",
       apiError.statusCode,
       apiError.isNetworkError,
     );

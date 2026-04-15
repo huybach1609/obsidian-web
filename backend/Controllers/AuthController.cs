@@ -17,6 +17,8 @@ namespace backend.Controllers
         private readonly string _configPath;
         private readonly CredentialConfig? _credentialConfig;
         private readonly bool _isDemo;
+        private readonly string? _demoUsername;
+        private readonly string? _demoPassword;
 
         public AuthController(IConfiguration configuration)
         {
@@ -24,6 +26,8 @@ namespace backend.Controllers
                       ?? throw new EmptyConfigurationValueException("JWT_SECRET is not configured in environment variables.");
             _isDemo = configuration.GetValue<bool>("Demo:IsDemo")
                      || configuration.GetValue<bool>("IS_DEMO");
+            _demoUsername = configuration["Demo:Username"];
+            _demoPassword = configuration["Demo:Password"];
 
             // Path to the Obsidian vault config file that stores credentials.
             // Vault root comes from appsettings.json: "vault": { "root": "/vault" }.
@@ -45,6 +49,32 @@ namespace backend.Controllers
             {
                 _credentialConfig = null;
             }
+        }
+
+        // GET /api/guest/demo
+        // Returns demo credentials so the frontend can auto-fill and sign in.
+        [HttpGet("guest/demo")]
+        [AllowAnonymous]
+        public IActionResult GetDemoGuestAccount()
+        {
+            if (!_isDemo)
+            {
+                return NotFound(new { error = "DemoModeDisabled" });
+            }
+
+            if (string.IsNullOrWhiteSpace(_demoUsername) || string.IsNullOrWhiteSpace(_demoPassword))
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    error = "DemoCredentialsNotConfigured",
+                    message = "Demo guest account is not configured."
+                });
+            }
+            return Ok(new
+            {
+                username = _demoUsername,
+                password = _demoPassword
+            });
         }
 
         private IActionResult? BlockWriteInDemo()

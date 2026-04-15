@@ -17,17 +17,6 @@ throw new EmptyConfigurationValueException("JWT_SECRET is not configured in envi
 var isDemo = builder.Configuration.GetValue<bool>("Demo:IsDemo")
     || builder.Configuration.GetValue<bool>("IS_DEMO");
 
-// var username = builder.Configuration["credential:username"] ??
-// throw new EmptyConfigurationValueException("credential__username is not configured in environment variables.");
-
-// var password = builder.Configuration["credential:password"] ??
-// throw new EmptyConfigurationValueException("credential__password is not configured in environment variables.");
-
-Console.WriteLine($"Root path: {VAULT_ROOT}");
-Console.WriteLine($"JWT Key: {jwtKey}");
-Console.WriteLine($"Demo mode: {isDemo}");
-// Console.WriteLine($"Username: {username}");
-// Console.WriteLine($"Password: {password}");
 
 builder.Services.AddAppCore(builder.Configuration);
 builder.Services.AddAuthentication(builder.Configuration, jwtKey);
