@@ -388,7 +388,7 @@ export default function CodeMirrorEditor({
             try {
               Vim.map(mapping.keys, mapping.action, mapping.mode);
             } catch (e) {
-              log.warn("Failed to map key:", mapping, e);
+              console.error("Failed to map key:", mapping, e);
             }
           });
 
