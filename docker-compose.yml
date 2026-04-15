@@ -10,8 +10,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:2112
       - jwt_secret=${JWT_SECRET}
-      - credential__username=${USERNAME_APP}
-      - credential__password=${PASSWORD_APP}
 
     volumes:
       - "${VAULT_ROOT}:/vault"
